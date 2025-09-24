@@ -1,0 +1,82 @@
+import { AutoComplete, Input, message } from "antd";
+import { useState, useEffect } from "react";
+import { mapToRequestPayload } from "../../MapToRequestPayload";
+import { useProducts } from "../../ProductContext";
+import { searchProducts } from '../../products.api';
+
+function SearchBar() {
+  const [query, setQuery] = useState("");
+  const [options, setOptions] = useState([]);
+  const { filters, setFilters, fetchProducts } = useProducts();
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      const fetchSuggestions = async () => {
+        if (query.length > 1) {
+          try {
+            const payload = mapToRequestPayload({ ...filters, searchTerm: query });
+            const res = await searchProducts(payload);
+            const formatted = (res.data || []).map((item) => ({
+              value: item.productName,
+              label: (
+                <div>
+                  <strong>{item.productName}</strong>
+                  <div style={{ fontSize: 12, color: "#888" }}>
+                    {item.category || "Product"}
+                  </div>
+                </div>
+              ),
+            }));
+            setOptions(formatted);
+          } catch (err) {
+            console.error("Error fetching suggestions:", err);
+            setOptions([]);
+          }
+        } else {
+          setOptions([]);
+        }
+      };
+
+      fetchSuggestions();
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, [query, filters]);
+
+  const handleSearch = (value) => {
+    const matchedOption = options.find(
+      (opt) => opt.value.toLowerCase() === value.toLowerCase()
+    );
+
+    const updatedFilters = {
+      ...filters,
+      searchTerm: matchedOption ? matchedOption.value : value,
+    };
+
+    const cleanedFilters = mapToRequestPayload(updatedFilters);
+
+    setFilters(updatedFilters);
+    fetchProducts(cleanedFilters);
+  };
+
+  return (
+    <div style={{ maxWidth: 400, marginBottom: 24 }}>
+      <AutoComplete
+        options={options}
+        style={{ width: "100%" }}
+        onSelect={handleSearch}
+        onSearch={(text) => setQuery(text)}
+        placeholder="Search for products"
+        filterOption={false}
+      >
+        <Input.Search
+          enterButton
+          onSearch={handleSearch}
+          allowClear
+        />
+      </AutoComplete>
+    </div>
+  );
+}
+
+export default SearchBar;

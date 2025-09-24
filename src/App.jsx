@@ -1,23 +1,13 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar/Navbar';
-import Home from './pages/Home/Home';
-import About from './pages/About/About';
-import Counter from './features/counter/Counter';
-import Footer from './components/Footer/Footer';
+import RouteItems from './RouteItems'
+import HeaderNav from './modules/Products/Product_Landing/Components/HeaderNav'
+import SiteFooter from './modules/Products/Product_Landing/Components/SiteFooter'
 
-function App() {
+export default function App() {
   return (
-    <Router>
-      <Navbar />
-      <Routes>
-        <Route path='/' element={<Home />} />
-        <Route path='/about' element={<About />} />
-        <Route path='/counter' element={<Counter />} />
-      </Routes>
-      <Footer/>
-    </Router>
-  );
+    <>
+      <HeaderNav />
+      <RouteItems />
+      <SiteFooter />
+    </>
+  )
 }
-
-export default App;

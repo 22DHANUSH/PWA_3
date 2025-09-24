@@ -1,14 +1,25 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './assets/styles/global.css';
-import App from './App';
+import './assets/styles/global.css'
+
+import App from './App.jsx'
+import { BrowserRouter } from 'react-router-dom'
+import { ConfigProvider } from 'antd'
+import React from 'react'
+import { createRoot } from 'react-dom/client'
+import theme from './assets/styles/theme'
 import { store } from './app/store';
 import { Provider } from 'react-redux';
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+
+
+createRoot(document.getElementById('root')).render(
   <React.StrictMode>
+    <ConfigProvider theme={theme}>
     <Provider store={store}>
-      <App />
-    </Provider>
+
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+      </Provider>
+    </ConfigProvider>
   </React.StrictMode>
-);
+)

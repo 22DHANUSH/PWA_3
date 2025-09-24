@@ -1,0 +1,118 @@
+.auth-page {
+  display: flex;
+  height: 100vh;
+  font-family: Inter, sans-serif;
+  background-color: rgb(243 244 246);
+}
+
+.auth-left {
+  width: 50%;
+  background-image: url("../../../assets/images/csc_logo.webp");
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.auth-left-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: color-mix(in srgb, black 40%);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+}
+
+.auth-right {
+  width: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+}
+
+.auth-card {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px color-mix(in srgb, black 10%);
+  width: 100%;
+  max-width: 400px;
+}
+
+.auth-logo {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.auth-title {
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.auth-subtitle {
+  display: block;
+  text-align: center;
+  margin-bottom: 2rem;
+  color: rgb(107 114 128);
+}
+
+.auth-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.auth-link {
+  font-size: 0.875rem;
+  color: rgb(37 99 235);
+  text-decoration: none;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  margin: 1.5rem 0;
+}
+
+.auth-divider hr {
+  flex-grow: 1;
+  border: none;
+  border-top: 1px solid rgb(209 213 219);
+}
+
+.auth-divider span {
+  margin: 0 1rem;
+  color: rgb(107 114 128);
+  font-size: 0.875rem;
+}
+
+.auth-social-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.auth-footer {
+  text-align: center;
+  font-size: 0.875rem;
+  color: rgb(107 114 128);
+}
+
+.auth-footer a {
+  color: rgb(37 99 235);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-footer a:hover {
+  text-decoration: underline;
+}
