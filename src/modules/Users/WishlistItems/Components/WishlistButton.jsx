@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, message } from "antd";
 import {addWishlistItem,checkWishlist,deleteWishlistItem,} from "./../../users.api";
 
@@ -7,7 +7,6 @@ const WishlistButton = ({ userId, productSkuId }) => {
   const [wishlistItemId, setWishlistItemId] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  //  Check if product already in wishlist
   const fetchWishlistStatus = async () => {
     try {
       const res = await checkWishlist(userId, productSkuId);
@@ -20,11 +19,10 @@ const WishlistButton = ({ userId, productSkuId }) => {
       }
     } catch (err) {
       if (err.response && err.response.status === 404) {
-        setIsWishlisted(false);        // Not in wishlist → set false
+        setIsWishlisted(false);       
         setWishlistItemId(null);
       } else {
         console.error(err);
-        message.error("Failed to check wishlist status");
       }
     }
   };
@@ -46,7 +44,7 @@ const WishlistButton = ({ userId, productSkuId }) => {
         } else {
           message.success("Added to wishlist");
           setIsWishlisted(true);
-          setWishlistItemId(res); // backend returns wishlistItemId
+          setWishlistItemId(res);
         }
       }
     } catch (err) {

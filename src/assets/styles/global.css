@@ -548,4 +548,8 @@ a:hover {
   padding: 0;
 }
  
+ /* Force square checkbox */
+.ant-checkbox-inner {
+  border-radius: 2px !important; /* Default Ant Design is 2px */
+}
  

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Row, Col, Spin } from "antd";
 import api from "../../../../app/users.axios.js";
 import ProductInfo from "../Components/ProductInfo.jsx";
@@ -6,14 +6,7 @@ import ProductActions from "../Components/ProductActions.jsx";
 import ProductImageGallery from "../Components/ProductImageViewer.jsx";
 import ProductReviews from "../Components/ProductReviews.jsx";
 import ProductOptions from "../Components/ProductOptions.jsx";
-import {
-  getProductById,
-  getSkusByProductId,
-  getReviewsByProductId,
-  getColorsByProductId,
-  getSizesByProductId,
-  getImagesBySku
-} from '../../products.api.js';
+import { getProductById, getSkusByProductId, getReviewsByProductId, getColorsByProductId, getSizesByProductId, getImagesBySku} from '../../products.api.js';
 
 const ProductDetailPage = ({ productId, productSkuId }) => {
   const [skus, setSkus] = useState([]);
@@ -63,41 +56,58 @@ const ProductDetailPage = ({ productId, productSkuId }) => {
     }
   };
  
-  
-useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const [skuData, productData, reviewsData, colorsData, sizesData] = await Promise.all([
-        getSkusByProductId(productId),
-        getProductById(productId),
-        getReviewsByProductId(productId),
-        getColorsByProductId(productId),
-        getSizesByProductId(productId),
-      ]);
-
-      setSkus(Array.isArray(skuData) ? skuData : []);
-      setProduct(productData || null);
-      setReviews(Array.isArray(reviewsData) ? reviewsData : []);
-      setAvailableColors(Array.isArray(colorsData) ? colorsData : []);
-      setAvailableSizes(Array.isArray(sizesData) ? sizesData : []);
-
-      const initialSku = skuData.find(sku => sku.productSkuId === productSkuId) || skuData[0];
-      if (initialSku) {
-        setSelectedColor(initialSku.productColor);
-        setSelectedSize(initialSku.productSize);
-        setSelectedSku(initialSku);
-
-        const imageData = await getImagesBySku(initialSku.productSkuId);
-        setImages(imageData);
-        const primaryImage = imageData.find(img => img.isPrimary) || imageData[0];
-        setSelectedImage(primaryImage?.imageUrl || null);
-      }
-    } catch (error) {
-      console.error("Error fetching product data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+      const fetchData = async () => {
+        try {
+          const [skuData, productData, reviewsData, colorsData, sizesData] = await Promise.all([
+            getSkusByProductId(productId),
+            getProductById(productId),
+            getReviewsByProductId(productId),
+            getColorsByProductId(productId),
+            getSizesByProductId(productId),
+          ]);
+ 
+          setSkus(Array.isArray(skuData) ? skuData : []);
+          setProduct(productData || null);
+          setReviews(Array.isArray(reviewsData) ? reviewsData : []);
+          setAvailableColors(Array.isArray(colorsData) ? colorsData : []);
+          setAvailableSizes(Array.isArray(sizesData) ? sizesData : []);
+ 
+          const initialSku = skuData.find((sku) => sku.productSkuId === productSkuId) || skuData[0];
+          if (initialSku) {
+            setSelectedColor(initialSku.productColor);
+            setSelectedSize(initialSku.productSize);
+            setSelectedSku(initialSku);
+ 
+            const imageData = await getImagesBySku(initialSku.productSkuId);
+            setImages(imageData);
+            const primaryImage = imageData.find((img) => img.isPrimary) || imageData[0];
+            setSelectedImage(primaryImage?.imageUrl || null);
+          }
+ 
+          // Fetch primary image for each color
+          const colorImageMap = {};
+          for (const sku of skuData) {
+            const color = sku.productColor;
+            if (!colorImageMap[color]) {
+              try {
+                const imageData = await getImagesBySku(sku.productSkuId);
+                const primaryImage = imageData.find((img) => img.isPrimary) || imageData[0];
+                if (primaryImage) {
+                  colorImageMap[color] = primaryImage.imageUrl;
+                }
+              } catch (error) {
+                console.error(`Error fetching image for color ${color}:`, error);
+              }
+            }
+          }
+          setColorImages(colorImageMap);
+        } catch (error) {
+          console.error("Error fetching product data:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
 
   fetchData();
 }, [productId, productSkuId]);
@@ -182,6 +192,14 @@ useEffect(() => {
                   price={selectedSku.productPrice} 
                   userId={userId} 
                   productSkuId={selectedSku.productSkuId}
+                  product={{
+                    productId: product.productId,
+                    productTitle: product.productTitle,
+                    productPrice: selectedSku.productPrice,
+                    productSize: selectedSku.productSize,
+                    productColor: selectedSku.productColor,
+                    imageUrl: images[0]?.imageUrl || ""
+                  }}
                 />
               </>
             )}

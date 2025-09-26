@@ -1,6 +1,6 @@
 import user_api from "../../app/users.axios";
  
-export async function signup({FirstName,LastName,email,PhoneNumber,PasswordHash,}) {
+export async function signup({FirstName,LastName,email,PhoneNumber,PasswordHash,}) {  
   const res = await user_api.post("/users", {FirstName,LastName, email, PhoneNumber, PasswordHash,});
   return res.data;
 }
@@ -43,7 +43,7 @@ export async function getProfilePictureWithSas(profileId) {
 export async function uploadAvatar(file) {
   const formData = new FormData();
   formData.append("file", file);
-  formData.append("folder", "user"); // as required by API to store in "user" directory
+  formData.append("folder", "user"); 
  
   const res = await user_api.post("/blob/upload", formData, {
     headers: { "Content-Type": "multipart/form-data" },
@@ -106,3 +106,8 @@ export const getProductImagesWithSas = async (productSkuId) => {
   const res = await user_api.get(`/blob/GenerateSasToken/${productSkuId}/1`);
   return res.data;
 };
+
+export async function forgotPassword ({ email, password }){
+    const res = await user_api.put("/users/forgotPassword", { email, password });
+    return res.data;
+}

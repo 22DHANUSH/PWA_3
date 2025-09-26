@@ -7,6 +7,7 @@ import { setUser } from "./../../users.slice";
 import "./../../Auth/Auth.css";
 import "../../../../assets/styles/global.css";
 import logo from "../../../../assets/images/columbialogo.png";
+import { mergeGuestCart } from "../../../Cart/cart.api"; 
 
 const { Title } = Typography;
 
@@ -22,6 +23,10 @@ export default function Login() {
       message.success(res.message || "Login successful");
       if (res.userId) {
         dispatch(setUser({ userId: res.userId, email: values.email }));
+
+        // Merge guest cart into DB cart
+        await mergeGuestCart(res.userId);
+        
         navigate("/products");
       }
     } catch (err) {
@@ -84,7 +89,12 @@ export default function Login() {
               </Button>
             </Form.Item>
           </Form>
-
+          <p className="auth-footer">
+            Forgot your password?{" "}
+            <a href="/forgot-password" className="auth-link">
+            Reset Password
+            </a>
+          </p>
           <p className="auth-footer">
             Don’t have an account?{" "}
             <a href="/signup" className="auth-link">

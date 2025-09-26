@@ -1,22 +1,16 @@
-import {
-  HeartOutlined,
-  SearchOutlined,
-  ShoppingCartOutlined,
-  ShoppingOutlined,
-  UserOutlined,
-} from "@ant-design/icons";
-
-import { Input } from "antd";
-import { Link, useLocation } from "react-router-dom"; 
-import Columbialogo from '../../../../assets/images/columbialogo.png';
+import { HeartOutlined, ShoppingCartOutlined, UserOutlined,} from "@ant-design/icons";
+import { Input, Badge } from "antd"; 
+import { Link, useLocation } from "react-router-dom";
+import Columbialogo from "../../../../assets/images/columbialogo.png";
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
+import { useCart } from "../../../Cart/CartContext"; 
 
 export default function HeaderNav() {
   const location = useLocation();
   const email = useSelector((state) => state.auth.email);
   const [emailInitial, setEmailInitial] = useState("");
-
+  const { cartCount } = useCart(); 
   const isLoginPage = location.pathname === "/login";
   const hideSearch = location.pathname.startsWith("/products") || isLoginPage;
 
@@ -31,7 +25,6 @@ export default function HeaderNav() {
   return (
     <header className="sticky-header">
       <div className="container nav-bar">
-        {/* Left group: logo + nav links */}
         <div className="nav-left">
           <nav
             className="nav-links"
@@ -50,32 +43,16 @@ export default function HeaderNav() {
           </nav>
         </div>
 
-        {/* Center group: search bar */}
-        <div className="nav-center">
-          {!hideSearch && (
-            <Input
-              aria-label="Search"
-              size="middle"
-              prefix={<SearchOutlined />}
-              placeholder="Search"
-              className="nav-search"
-              style={{ maxWidth: 300 }}
-            />
-          )}
-        </div>
-
-        {/* Right group: actions */}
         {!isLoginPage && (
           <div className="nav-actions">
             <Link to="/wishlist" className="icon-btn" aria-label="Wishlist">
               <HeartOutlined />
             </Link>
-            <Link to="/cart" className="icon-btn" aria-label="Cart">         {/*////////////////////////////////////////////////////////////*/}
-              <ShoppingCartOutlined />
+            <Link to="/cart" className="icon-btn" aria-label="Cart">
+              <Badge count={cartCount} offset={[0, 4]} size="small">
+                <ShoppingCartOutlined style={{ fontSize: 25 }} />
+              </Badge>
             </Link>
-            <button className="icon-btn icon-btn--outline" aria-label="Bag">
-              <ShoppingOutlined />
-            </button>
             <Link to="/Profile" className="icon-btn" aria-label="Account">
               {emailInitial ? (
                 <span className="email-avatar">{emailInitial}</span>

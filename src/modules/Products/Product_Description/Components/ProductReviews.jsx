@@ -2,13 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Typography, Divider, Rate, Input, Button, Space, Card } from 'antd';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
-import {
-  getUserNameById,
-  addReview,
-  editReview,
-  deleteReview,
-  getReviewsByProductId // <-- Use this for reloading
-} from '../../products.api.js';
+import { getUserNameById, addReview, editReview, deleteReview, getReviewsByProductId } from '../../products.api.js';
  
 const { TextArea } = Input;
 const { Title, Text, Paragraph } = Typography;
@@ -20,7 +14,6 @@ const ProductReviews = ({ reviews, setReviews, selectedSku }) => {
   const [userMap, setUserMap] = useState({});
   const [editingReviewId, setEditingReviewId] = useState(null);
  
-  // Reload reviews from backend
   const reloadReviews = async () => {
     if (!selectedSku?.productId) return;
     try {
@@ -31,7 +24,6 @@ const ProductReviews = ({ reviews, setReviews, selectedSku }) => {
     }
   };
  
-  // Fetch usernames for reviews
   useEffect(() => {
     const fetchUserNames = async () => {
       const map = {};

@@ -4,5 +4,4 @@ const product_api = axios.create({
   baseURL: PRODUCT_URL,
   headers: { "Content-Type": "application/json" },
 });
- 
 export default product_api;

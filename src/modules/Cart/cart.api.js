@@ -1,7 +1,6 @@
 import cart_api from "../../app/cart.axios";
 import user_api from "../../app/users.axios";
 
-// --- Cart Endpoints ---
 export const createCart = (userId) => cart_api.post(`/carts`, { userId });
 
 export const getCartById = (cartId) => cart_api.get(`/carts/${cartId}`);
@@ -12,7 +11,6 @@ export const updateCart = (cartId, userId, updatedAt) => cart_api.put(`/carts/${
 
 export const deleteCart = (cartId) => cart_api.delete(`/carts/${cartId}`);
 
-// --- Cart Items Endpoints ---
 export const addCartItem = (cartId, productSkuId, quantity) => cart_api.post(`/cart_items`, { cartId, productSkuId, quantity });
 
 export const getCartItems = () => cart_api.get(`/cart_items`);
@@ -27,7 +25,6 @@ export const getCartItemsByCart = (cartId) => cart_api.get(`/cart_items/display/
 
 export const getCartItemBySku = (cartId, skuId) => cart_api.get(`/cart_items/${cartId}/sku/${skuId}`);
 
-/////////////////////// S A S //////////////////////////////////////////////
 export async function getImagesBySku(skuId) {
   try {
     const response = await user_api.get(`/blob/GenerateSasToken/${skuId}/1`);
@@ -37,11 +34,8 @@ export async function getImagesBySku(skuId) {
     return [];
   }
 }
-/////////////////////////////////////////////////////////////////////////////
 
-// --- Utility: Add to Cart Flow ---
 export const addToCartFlow = async (userId, productSkuId, quantity) => {
-  // 1. Get or create user cart
   let cartRes = await getCartByUserId(userId);
   let cartId;
 
@@ -52,7 +46,6 @@ export const addToCartFlow = async (userId, productSkuId, quantity) => {
     cartId = cartRes.data.cartId;
   }
 
-  // 2. Check if item already exists
   try {
     const existingItem = await getCartItemBySku(cartId, productSkuId);
     if (existingItem?.data) {
@@ -63,12 +56,74 @@ export const addToCartFlow = async (userId, productSkuId, quantity) => {
   } catch (err) {
     if (err.response?.status !== 404) {
       console.error("Unexpected error while checking existing cart item:", err);
-      throw err; // Only throw if it's not a 404
+      throw err; 
     }
-    // If 404, proceed to add new item
   }
 
-  // 3. Add as new item
   const newItem = await addCartItem(cartId, productSkuId, quantity);
   return newItem.data;
 };
+
+const getGuestCart = () => JSON.parse(localStorage.getItem("guestCart") || "[]");
+const clearGuestCart = () => localStorage.removeItem("guestCart");
+
+export async function mergeGuestCart(userId) {
+  const guestItems = getGuestCart();
+  if (!guestItems || guestItems.length === 0) return;
+
+  let cartId;
+
+  try {
+    const cartRes = await getCartByUserId(userId);
+    cartId = cartRes?.data?.cartId;
+  } catch (err) {
+    if (err?.response?.status === 404) {
+      try {
+        const created = await createCart(userId);
+        cartId = created?.data?.cartId;
+      } catch (createErr) {
+        console.error("Failed to create cart for user:", userId, createErr);
+        throw createErr;
+      }
+    } else {
+      console.error("Failed to fetch cart for user:", userId, err);
+      throw err;
+    }
+  }
+
+  if (!cartId) {
+    const created = await createCart(userId);
+    cartId = created?.data?.cartId;
+  }
+
+  if (!cartId) {
+    throw new Error("Could not obtain cartId for user " + userId);
+  }
+
+  for (const item of guestItems) {
+    try {
+      const existingRes = await getCartItemBySku(cartId, item.productSkuId);
+      const existing = existingRes?.data;
+
+      if (existing) {
+        const newQty = (existing.quantity || 0) + (item.quantity || 0);
+        await updateCartItem(existing.cartItemId, newQty);
+      } else {
+        await addCartItem(cartId, item.productSkuId, item.quantity);
+      }
+    } catch (err) {
+      if (err?.response?.status === 404) {
+        try {
+          await addCartItem(cartId, item.productSkuId, item.quantity);
+        } catch (addErr) {
+          console.error("Failed to add guest item to cart:", item, addErr);
+        }
+      } else {
+        console.error("Error while merging item:", item, err);
+      }
+    }
+  }
+
+  clearGuestCart();
+  console.log("Guest cart merged into user cart (cartId:", cartId, ")");
+}

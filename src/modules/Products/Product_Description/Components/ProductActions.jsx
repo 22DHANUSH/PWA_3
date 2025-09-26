@@ -1,22 +1,16 @@
 import { useState, useEffect } from "react";
 import { Button, Typography, message } from "antd";
-import {
-  ShoppingCartOutlined,
-  ShoppingOutlined,
-  MinusOutlined,
-  PlusOutlined,
-} from "@ant-design/icons";
+import { ShoppingCartOutlined, ShoppingOutlined, MinusOutlined, PlusOutlined,} from "@ant-design/icons";
 import WishlistButton from "../../../Users/WishlistItems/Components/WishlistButton";
-import {                //////////////////////////////////////////////////////
-  addToCartFlow,
-} from "../../../Cart/cart.api"; 
-
+import { addToCartFlow } from "../../../Cart/cart.api"; 
+import { useCart } from "../../../Cart/CartContext";
 
 const { Text } = Typography;
 
-const ProductActions = ({ stock, price, userId, productSkuId }) => {
+const ProductActions = ({ stock, price, userId, productSkuId, product }) => {
   const [quantity, setQuantity] = useState(1);
-  const[loading, setLoading] = useState(false); /////////////////////////////////////////////////////////////////
+  const [loading, setLoading] = useState(false);
+  const { refreshCartCount } = useCart();
 
   useEffect(() => {
     setQuantity(1);
@@ -34,11 +28,46 @@ const ProductActions = ({ stock, price, userId, productSkuId }) => {
     }
   };
 
-  const handleAddToCart = async () => {  ////////////////////////////////////////////////////////////////////////////////
+  const getGuestCart = () =>JSON.parse(localStorage.getItem("guestCart") || "[]");
+  const setGuestCart = (items) =>localStorage.setItem("guestCart", JSON.stringify(items));
+  const handleAddToCart = async () => {
     try {
       setLoading(true);
-      await addToCartFlow(userId, productSkuId, quantity);
+
+      if (!userId) {
+        let guestCart = getGuestCart();
+        const existing = guestCart.find((item) => item.productSkuId === productSkuId);
+
+        if (existing) {
+          existing.quantity += quantity;
+        } else {
+          guestCart.push({
+            productSkuId,
+            quantity,
+            productId: product.productId,
+            productTitle: product.productTitle,
+            productPrice: price,
+            productImage: product.imageUrl || "", 
+            productSize: product.productSize || "",
+            productColor: product.productColor || "",
+          });
+        }
+
+        setGuestCart(guestCart);
+        message.success("Added to cart (guest)!");
+        await refreshCartCount(); 
+        return;
+      }
+
+      await addToCartFlow(userId, productSkuId, quantity, {
+        productId: product.productId,
+        productTitle: product.productTitle,
+        productPrice: price,
+        productSize: product.productSize,
+        productColor: product.productColor,
+      });
       message.success("Added to cart!");
+      await refreshCartCount(); 
     } catch (error) {
       console.error("Add to cart failed:", error);
       message.error("Failed to add to cart");
@@ -49,9 +78,7 @@ const ProductActions = ({ stock, price, userId, productSkuId }) => {
 
   return (
     <div style={{ marginTop: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
-      {/* Quantity and Price Row */}
       <div style={{ display: "flex", alignItems: "center", gap: "32px", flexWrap: "wrap" }}>
-        {/* Quantity Selector */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <Text strong>Quantity:</Text>
           <div
@@ -81,29 +108,22 @@ const ProductActions = ({ stock, price, userId, productSkuId }) => {
         </div>
       </div>
 
-      {/* Action Buttons Row */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
           gap: "16px",
-          flexWrap: "nowrap", // Prevent wrapping
+          flexWrap: "nowrap",
           justifyContent: "flex-start",
         }}
       >
         <Button
           type="primary"
           icon={<ShoppingCartOutlined />}
-          style={{
-            backgroundColor: "#000",
-            borderColor: "#000",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#333";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "#000";
-          }}
+          loading={loading}
+          style={{ backgroundColor: "#000", borderColor: "#000" }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#333")}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#000")}
           onClick={handleAddToCart}
         >
           Add to Cart
@@ -112,26 +132,16 @@ const ProductActions = ({ stock, price, userId, productSkuId }) => {
         <Button
           type="default"
           icon={<ShoppingOutlined />}
-          style={{
-            borderColor: "#000",
-            color: "#000",
-            backgroundColor: "#fff",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#f5f5f5";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "#fff";
-          }}
+          style={{ borderColor: "#000", color: "#000", backgroundColor: "#fff" }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f5f5f5")}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#fff")}
         >
           Buy Now
         </Button>
 
-        
         <div style={{ flex: 1, minWidth: "120px", maxWidth: "180px" }}>
           <WishlistButton userId={userId} productSkuId={productSkuId} />
         </div>
-
       </div>
     </div>
   );

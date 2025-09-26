@@ -26,7 +26,22 @@ function ProductFilter() {
     fetchMeta();
   }, []);
 
-  //  Clean filters before sending to API
+  const resetFilters = () => {
+    const clearedFilters = {
+      categoryIds: [],
+      brandIds: [],
+      colors: [],
+      sizes: [],
+      genders: [],
+      minPrice: 0,
+      maxPrice: 500,
+      searchTerm: "",
+    };
+ 
+    setFilters(clearedFilters);
+    fetchProducts(cleanFilters(clearedFilters));
+  };
+
   const cleanFilters = (filters) => {
     const cleaned = {};
     Object.entries(filters).forEach(([key, value]) => {
@@ -35,7 +50,7 @@ function ProductFilter() {
       } else if (typeof value === "number") {
         if (
           (key === "minPrice" && value > 0) ||
-          (key === "maxPrice" && value < 100000)
+          (key === "maxPrice" && value < 500)
         ) {
           cleaned[key] = value;
         }
@@ -141,6 +156,14 @@ function ProductFilter() {
   };
 
   return (
+
+        <>
+     <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 12 }}>
+        <a onClick={resetFilters} style={{ color: "#1890ff", cursor: "pointer" }}>
+          Reset All Filters
+        </a>
+      </div>
+
     <Collapse defaultActiveKey={["categoryIds", "brandIds", "price"]}>
       <Panel header="Category" key="categoryIds">
         {renderCheckboxGroup(
@@ -166,17 +189,19 @@ function ProductFilter() {
         <Slider
           range
           min={0}
-          max={10000}
-          step={100}
-          value={[filters.minPrice ?? 0, filters.maxPrice ?? 10000]}
+          max={500}
+          step={10}
+          value={[filters.minPrice ?? 0, filters.maxPrice ?? 500]}
           onChange={handlePriceChange}
         />
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span>${filters.minPrice ?? 0}</span>
-          <span>${filters.maxPrice ?? 100000}</span>
+          <span>${filters.maxPrice ?? 500}</span>
         </div>
       </Panel>
     </Collapse>
+    
+    </>
   );
 }
 

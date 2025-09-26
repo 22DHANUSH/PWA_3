@@ -16,13 +16,13 @@ function SearchBar() {
           try {
             const payload = mapToRequestPayload({ ...filters, searchTerm: query });
             const res = await searchProducts(payload);
-            const formatted = (res.data || []).map((item) => ({
+            const formatted = (res || []).map((item) => ({
               value: item.productName,
               label: (
                 <div>
                   <strong>{item.productName}</strong>
                   <div style={{ fontSize: 12, color: "#888" }}>
-                    {item.category || "Product"}
+                    {item.categoryName || "Product"}
                   </div>
                 </div>
               ),

@@ -1,39 +1,52 @@
 // ProductCatalog.jsx
-import React, { useState, useEffect } from "react";
-import {
-  Row,
-  Col,
-  Card,
-  Spin,
-  Empty,
-  Typography,
-  Button,
-  Pagination,
-  message,
-} from "antd";
+import React from "react";
+import { Row, Col, Card, Spin, Empty, Typography, Button, Pagination, message } from "antd";
 import { HeartOutlined, HeartFilled } from "@ant-design/icons";
 import { useProducts } from "../../ProductContext";
 import { useNavigate } from "react-router-dom";
-import {
-  checkWishlist,
-  addWishlistItem,
-  deleteWishlistItem,
-} from "../../../Users/users.api";
-import {
-  getCartByUserId,
-  createCart,
-  addCartItem,
-  updateCartItem,
-  getCartItemBySku,
-} from "../../../Carts/cart.api"; // ✅ import cart APIs
+import { checkWishlist, addWishlistItem, deleteWishlistItem } from "../../../Users/users.api";
+import { getCartByUserId, createCart, addCartItem, updateCartItem, getCartItemBySku } from "../../../Carts/cart.api";
+import { useCart } from "../../../Cart/CartContext";
 
 const { Title } = Typography;
+const getGuestCart = () => JSON.parse(localStorage.getItem("guestCart") || "[]");
+const setGuestCart = (items) => localStorage.setItem("guestCart", JSON.stringify(items));
+const addToGuestCart = (product, qty = 1) => {
+  const sku = product.productSkuID || product.productSkuId || product.productSku || product.sku;
+  if (!sku) {
+    console.warn("addToGuestCart: no SKU found on product", product);
+    return;
+  }
+
+  const guest = getGuestCart();
+  const existing = guest.find((it) => it.productSkuId === sku);
+
+  const priceRaw = product.productPrice ?? product.price ?? "0";
+  const productPrice = typeof priceRaw === "string" && priceRaw.startsWith("$") ? priceRaw : `$${priceRaw}`;
+
+  if (existing) {
+    existing.quantity = (existing.quantity || 0) + qty;
+  } else {
+    guest.push({
+      productSkuId: sku,
+      productId: product.productId,
+      productTitle: product.productName || product.productTitle || "",
+      productImage: product.imageUrl || product.productImage || "https://placehold.co/250x250?text=No+Image",
+      productPrice,
+      quantity: qty,
+      isOutOfStock: !!product.isOutOfStock,
+      productSize: product.productSize,
+      productColor: product.productColor,
+    });
+  }
+  setGuestCart(guest);
+};
 
 function WishlistIcon({ userId, productSkuId }) {
-  const [wishlisted, setWishlisted] = useState(false);
-  const [wishlistItemId, setWishlistItemId] = useState(null);
+  const [wishlisted, setWishlisted] = React.useState(false);
+  const [wishlistItemId, setWishlistItemId] = React.useState(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const fetchWishlistStatus = async () => {
       try {
         const res = await checkWishlist(userId, productSkuId);
@@ -67,26 +80,12 @@ function WishlistIcon({ userId, productSkuId }) {
 
   return wishlisted ? (
     <HeartFilled
-      style={{
-        position: "absolute",
-        top: 8,
-        right: 8,
-        fontSize: 20,
-        color: "red",
-        cursor: "pointer",
-      }}
+      style={{ position: "absolute", top: 8, right: 8, fontSize: 20, color: "red", cursor: "pointer" }}
       onClick={toggleWishlist}
     />
   ) : (
     <HeartOutlined
-      style={{
-        position: "absolute",
-        top: 8,
-        right: 8,
-        fontSize: 20,
-        color: "#090909ff",
-        cursor: "pointer",
-      }}
+      style={{ position: "absolute", top: 8, right: 8, fontSize: 20, color: "#090909ff", cursor: "pointer" }}
       onClick={toggleWishlist}
     />
   );
@@ -96,21 +95,28 @@ function ProductCatalog() {
   const userId = localStorage.getItem("userId");
   const { products, loading, pagination, setPagination, currentUserId } = useProducts();
   const navigate = useNavigate();
+  const { refreshCartCount } = useCart();
 
   const handlePageChange = (page) => {
     setPagination((prev) => ({ ...prev, pageNumber: page }));
   };
 
-  // ✅ Add to cart logic
-  const handleAddToCart = async (e, productSkuId) => {
-    e.stopPropagation(); // prevent card click navigation
-    if (!userId) {
-      message.warning("Please log in to add items to cart");
+  const handleAddToCart = async (e, product) => {
+    e.stopPropagation(); 
+
+    const sku = product.productSkuID || product.productSkuId || product.productSku || product.sku;
+    if (!sku) {
+      message.error("Product SKU is missing");
       return;
     }
 
+    if (!userId) {
+      addToGuestCart(product, 1);
+      message.success("Added to cart");
+      await refreshCartCount();
+      return;
+    }
     try {
-      // Step 1: Get or create cart
       let cart = null;
       try {
         const res = await getCartByUserId(userId);
@@ -120,17 +126,25 @@ function ProductCatalog() {
         cart = res.data;
       }
 
-      // Step 2: Check if item already in cart
-      const existingItem = await getCartItemBySku(cart.cartId, productSkuId);
+      let existingItem = null;
+      try {
+        const res = await getCartItemBySku(cart.cartId, sku);
+        existingItem = res.data;
+      } catch (err) {
+        if (err?.response?.status === 404) {
+          existingItem = null;
+        } else {
+          throw err;
+        }
+      }
 
-      if (existingItem?.data) {
-        // Update quantity if exists
-        await updateCartItem(existingItem.data.cartItemId, existingItem.data.quantity + 1);
+      if (existingItem) {
+        await updateCartItem(existingItem.cartItemId, existingItem.quantity + 1);
         message.success("Updated cart quantity");
       } else {
-        // Add as new item
-        await addCartItem(cart.cartId, productSkuId, 1);
+        await addCartItem(cart.cartId, sku, 1);
         message.success("Added to cart");
+        await refreshCartCount(); 
       }
     } catch (err) {
       console.error("Error adding to cart:", err);
@@ -158,57 +172,25 @@ function ProductCatalog() {
                 <Card
                   hoverable
                   style={{ position: "relative" }}
-                  onClick={() =>
-                    navigate(`/productdetails/${p.productId}/${p.productSkuID}`)
-                  }
+                  onClick={() => navigate(`/productdetails/${p.productId}/${p.productSkuID}`)}
                   cover={
                     <div style={{ position: "relative" }}>
                       <img
                         alt={p.productName || "Product"}
-                        src={
-                          p.imageUrl?.startsWith("http")
-                            ? p.imageUrl
-                            : "https://placehold.co/250x250?text=No+Image"
-                        }
-                        style={{
-                          height: 200,
-                          objectFit: "contain",
-                          width: "100%",
-                        }}
+                        src={p.imageUrl?.startsWith("http") ? p.imageUrl : "https://placehold.co/250x250?text=No+Image"}
+                        style={{ height: 200, objectFit: "contain", width: "100%" }}
                       />
-                      <WishlistIcon
-                        userId={currentUserId}
-                        productSkuId={p.productSkuID}
-                      />
+                      <WishlistIcon userId={currentUserId} productSkuId={p.productSkuID} />
                     </div>
                   }
                 >
                   <Card.Meta
                     title={p.productName ?? "Unnamed Product"}
                     description={
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          gap: 12,
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontWeight: 700,
-                            fontSize: 20,
-                            color: "#222",
-                          }}
-                        >
-                          ${p.productPrice ?? "—"}
-                        </span>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+                        <span style={{ fontWeight: 700, fontSize: 20, color: "#222" }}>${p.productPrice ?? "—"}</span>
                         <div style={{ display: "flex", gap: 8 }}>
-                          <Button
-                            type="primary"
-                            size="middle"
-                            onClick={(e) => handleAddToCart(e, p.productSkuID)} // ✅ Hooked up
-                          >
+                          <Button type="primary" size="middle" onClick={(e) => handleAddToCart(e, p)}>
                             Add to Cart
                           </Button>
                           <Button type="default" size="middle">
@@ -236,188 +218,3 @@ function ProductCatalog() {
 }
 
 export default ProductCatalog;
-
-// import React, { useState, useEffect } from "react";
-// import {
-//   Row,
-//   Col,
-//   Card,
-//   Spin,
-//   Empty,
-//   Typography,
-//   Button,
-//   Pagination,
-// } from "antd";
-// import { HeartOutlined, HeartFilled } from "@ant-design/icons";
-// import { useProducts } from "../../ProductContext";
-// import { useNavigate } from "react-router-dom";
-// import {checkWishlist,addWishlistItem,deleteWishlistItem,} from "../../../Users/users.api";
-
-// const { Title } = Typography;
-
-// function WishlistIcon({ userId, productSkuId }) {
-//   const [wishlisted, setWishlisted] = useState(false);
-//   const [wishlistItemId, setWishlistItemId] = useState(null);
-
-//   useEffect(() => {
-//     const fetchWishlistStatus = async () => {
-//       try {
-//         const res = await checkWishlist(userId, productSkuId);
-//         if (res?.isWishlisted) {
-//           setWishlisted(true);
-//           setWishlistItemId(res.wishlistItemId);
-//         }
-//       } catch (err) {
-//         console.error("Error checking wishlist:", err);
-//       }
-//     };
-//     fetchWishlistStatus();
-//   }, [userId, productSkuId]);
-
-//   const toggleWishlist = async (e) => {
-//     e.stopPropagation();
-//     try {
-//       if (wishlisted) {
-//         await deleteWishlistItem(wishlistItemId);
-//         setWishlisted(false);
-//         setWishlistItemId(null);
-//       } else {
-//         const res = await addWishlistItem(userId, productSkuId);
-//         setWishlisted(true);
-//         setWishlistItemId(res.wishlistItemId);
-//       }
-//     } catch (err) {
-//       console.error("Error toggling wishlist:", err);
-//     }
-//   };
-
-//   return wishlisted ? (
-//     <HeartFilled
-//       style={{
-//         position: "absolute",
-//         top: 8,
-//         right: 8,
-//         fontSize: 20,
-//         color: "red",
-//         cursor: "pointer",
-//       }}
-//       onClick={toggleWishlist}
-//     />
-//   ) : (
-//     <HeartOutlined
-//       style={{
-//         position: "absolute",
-//         top: 8,
-//         right: 8,
-//         fontSize: 20,
-//         color: "#090909ff",
-//         cursor: "pointer",
-//       }}
-//       onClick={toggleWishlist}
-//     />
-//   );
-// }
-
-// function ProductCatalog() {
-//   const userId = localStorage.getItem("userId");
-//   const { products, loading, pagination, setPagination, currentUserId } = useProducts();
-//   const navigate = useNavigate();
-
-//   const handlePageChange = (page) => {
-//     setPagination((prev) => ({ ...prev, pageNumber: page }));
-//   };
-
-//   return (
-//     <div style={{ padding: "0 16px" }}>
-//       <div style={{ marginTop: 16, marginBottom: 16 }}>
-//         <Title level={4}>
-//           Products <span>({products.length})</span>
-//         </Title>
-//       </div>
-
-//       {loading ? (
-//         <Spin tip="Loading products..." />
-//       ) : products.length === 0 ? (
-//         <Empty description="No products found for selected filters." />
-//       ) : (
-//         <>
-//           <Row gutter={[16, 16]}>
-//             {products.map((p, idx) => (
-//               <Col span={8} key={p.productId || `product-${idx}`}>
-//                 <Card
-//                   hoverable
-//                   style={{ position: "relative" }}
-//                   onClick={() =>
-//                     navigate(`/productdetails/${p.productId}/${p.productSkuID}`)
-//                   }
-//                   cover={
-//                     <div style={{ position: "relative" }}>
-//                       <img
-//                         alt={p.productName || "Product"}
-//                         src={
-//                           p.imageUrl?.startsWith("http")
-//                             ? p.imageUrl
-//                             : "https://placehold.co/250x250?text=No+Image"
-//                         }
-//                         style={{
-//                           height: 200,
-//                           objectFit: "contain",
-//                           width: "100%",
-//                         }}
-//                       />
-//                       <WishlistIcon
-//                         userId={currentUserId}
-//                         productSkuId={p.productSkuID}
-//                       />
-//                     </div>
-//                   }
-//                 >
-//                   <Card.Meta
-//                     title={p.productName ?? "Unnamed Product"}
-//                     description={
-//                       <div
-//                         style={{
-//                           display: "flex",
-//                           flexDirection: "column",
-//                           alignItems: "center",
-//                           gap: 12,
-//                         }}
-//                       >
-//                         <span
-//                           style={{
-//                             fontWeight: 700,
-//                             fontSize: 20,
-//                             color: "#222",
-//                           }}
-//                         >
-//                           ${p.productPrice ?? "—"}
-//                         </span>
-//                         <div style={{ display: "flex", gap: 8 }}>
-//                           <Button type="primary" size="middle">
-//                             Add to Cart
-//                           </Button>
-//                           <Button type="default" size="middle">
-//                             Buy Now
-//                           </Button>
-//                         </div>
-//                       </div>
-//                     }
-//                   />
-//                 </Card>
-//               </Col>
-//             ))}
-//           </Row>
-//           <Pagination
-//             current={pagination.pageNumber}
-//             pageSize={pagination.pageSize}
-//             total={pagination.totalCount}
-//             onChange={handlePageChange}
-//             style={{ marginTop: 24, textAlign: "center" }}
-//           />
-//         </>
-//       )}
-//     </div>
-//   );
-// }
-
-// export default ProductCatalog;

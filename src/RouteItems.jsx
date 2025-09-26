@@ -9,6 +9,7 @@ import SearchAndFilterPage from "./modules/Products/Product_Catalog/Pages/Search
 import ProductDetailPageWrapper from "./modules/Products/Product_Description/ProductDetailPageWrapper";
 import WishlistPage from "./modules/Users/WishlistItems/Pages/WishlistItems";
 import CartPage from "./modules/Cart/CartPage";
+import ForgotPassword from "./modules/Users/Auth/Pages/ForgotPassword";
 
 const RouteItems = () => {
   return (
@@ -17,6 +18,7 @@ const RouteItems = () => {
       <Route path="/products" element={<SearchAndFilterPage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/addresses" element={<Addresses />} />
       {/* <Route path="/productdetails" element={<ProductDetailsPage />} /> */}
@@ -27,6 +29,7 @@ const RouteItems = () => {
 
       <Route path="/wishlist" element={<WishlistPage/>}/>
       <Route path="/cart" element={<CartPage/>}/>
+      <Route path="/checkout" element={<CartPage/>}/>
     </Routes>
   );
 };

@@ -19,7 +19,7 @@ const authSlice = createSlice({
       (state.userId = null),
         (state.email = null),
         localStorage.removeItem("userId");
-      localStorage.removeItem("email");
+        localStorage.removeItem("email");
     },
   },
 });

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Typography, Button, Tooltip } from "antd";
-
+ 
 const { Text } = Typography;
-
+ 
 const sizeOrder = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
-
+ 
 const ProductOptions = ({
   availableColors,
   availableSizes,
@@ -17,71 +17,88 @@ const ProductOptions = ({
   price,
 }) => {
   const [quantity, setQuantity] = useState(1);
-
+ 
   useEffect(() => {
     setQuantity(1);
   }, [selectedColor, selectedSize, stock]);
 
-  // Sort sizes based on predefined order
-  const sortedSizes = [...availableSizes].sort((a, b) => {
-    const indexA = sizeOrder.indexOf(a.toUpperCase());
-    const indexB = sizeOrder.indexOf(b.toUpperCase());
-
-    // If size not found in order list, push it to the end
-    return (indexA === -1 ? Infinity : indexA) - (indexB === -1 ? Infinity : indexB);
-  });
+ const sortedSizes = [...availableSizes].sort((a, b) => {
+  const upperA = a.toUpperCase();
+  const upperB = b.toUpperCase();
+ 
+  const indexA = sizeOrder.indexOf(upperA);
+  const indexB = sizeOrder.indexOf(upperB);
+ 
+  const isNumericA = !isNaN(parseFloat(a));
+  const isNumericB = !isNaN(parseFloat(b));
+ 
+  if (isNumericA && isNumericB) {
+    return parseFloat(a) - parseFloat(b); 
+  }
+ 
+  if (indexA !== -1 && indexB !== -1) {
+    return indexA - indexB; 
+  }
+ 
+  if (indexA !== -1) return -1;
+  if (indexB !== -1) return 1;
+ 
+  return a.localeCompare(b); 
+});
 
   return (
     <>
       <Text strong style={{ marginBottom: 8, display: "block" }}>
         Color:
       </Text>
-      <div
-        style={{
-          display: "flex",
-          gap: "8px",
-          marginBottom: "16px",
-          flexWrap: "wrap",
-        }}
-      >
-        {availableColors.map((color, idx) => {
-          const imageUrl = colorImages[color];
-          return (
-            <Tooltip title={color} key={idx}>
-              <Button
-                type={selectedColor === color ? "primary" : "default"}
-                style={{
-                  backgroundColor: selectedColor === color ? "#000" : "#fff",
-                  color: selectedColor === color ? "#fff" : "#000",
-                  border: "1px solid #000",
-                  padding: "0 12px",
-                  minWidth: 80,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-                onClick={() => setSelectedColor(color)}
-              >
-                {imageUrl ? (
-                  <img
-                    src={imageUrl}
-                    alt={color}
-                    style={{
-                      width: 24,
-                      height: 24,
-                      objectFit: "cover",
-                      marginRight: 8,
-                      borderRadius: 4,
-                    }}
-                  />
-                ) : null}
-                {color}
-              </Button>
-            </Tooltip>
-          );
-        })}
-      </div>
-
+<div
+  style={{
+    display: "flex",
+    gap: "12px",
+    marginBottom: "16px",
+    flexWrap: "wrap",
+  }}
+>
+  {availableColors.map((color, idx) => {
+    const imageUrl = colorImages[color];
+    return (
+      <Tooltip title={color} key={idx}>
+        <div
+          onClick={() => setSelectedColor(color)}
+          style={{
+            border: selectedColor === color ? "2px solid #1890ff" : "1px solid #ccc",
+            borderRadius: "50%",
+            width: 48,
+            height: 48,
+            cursor: "pointer",
+            overflow: "hidden",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "#fff",
+          }}
+        >
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={color}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                borderRadius: "50%",
+              }}
+            />
+          ) : (
+            <Text>{color}</Text>
+          )}
+        </div>
+      </Tooltip>
+    );
+  })}
+</div>
+ 
+ 
       <Text strong style={{ marginBottom: 8, display: "block" }}>
         Size:
       </Text>
@@ -109,7 +126,7 @@ const ProductOptions = ({
           </Button>
         ))}
       </div>
-
+ 
       <div
         style={{
           borderRadius: 6,
@@ -125,5 +142,5 @@ const ProductOptions = ({
     </>
   );
 };
-
+ 
 export default ProductOptions;
