@@ -16,7 +16,7 @@ export function ProductProvider({ children }) {
     sizes: [],
     genders: [],
     minPrice: 0,
-    maxPrice: 100000,
+    maxPrice: 500,
     searchTerm: "",
   });
 

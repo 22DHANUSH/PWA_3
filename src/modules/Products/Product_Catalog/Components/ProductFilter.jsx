@@ -93,7 +93,7 @@ function ProductFilter() {
     { name: "Pink", hex: "#FFC0CB" },
     { name: "Gray", hex: "#808080" },
   ];
-  const genderOptions = ["Men", "Women", "Unisex", "Kids"];
+  const genderOptions = ["Men", "Women", "Unisex"];
 
   const renderCheckboxGroup = (key, items, itemKey, itemLabel) => {
     if (key === "colors") {

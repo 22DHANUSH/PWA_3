@@ -6,6 +6,9 @@ import { getCartByUserId, getCartItemsByCart, updateCartItem, deleteCartItem, ge
 import "./Cart.css";
 import { useCart } from "./CartContext";
 const { Title, Text } = Typography;
+import { setBuyNow } from "../Orders/redux/orderSlice";   //  added
+import { useDispatch } from "react-redux";
+
 
 const getGuestCart = () => JSON.parse(localStorage.getItem("guestCart") || "[]");
 const setGuestCart = (items) => localStorage.setItem("guestCart", JSON.stringify(items));
@@ -17,6 +20,7 @@ const CartPage = () => {
   const { refreshCartCount } = useCart();
   const userId = localStorage.getItem("userId");
   const navigate = useNavigate();
+  const dispatch = useDispatch();   // ✅ added
 
   const fetchCart = async () => {
   try {
@@ -146,13 +150,23 @@ const CartPage = () => {
   const totalItems = items.reduce((acc, item) => acc + item.quantity, 0);
   const total = subtotal;
 
-  const handleCheckout = () => {
+  // const handleCheckout = () => {
+  //   if (!userId) {
+  //     message.info("Please log in to proceed with checkout");
+  //     navigate("/login");
+  //     return;
+  //   }
+  //   navigate("/checkout");
+  // };
+
+    const handleCheckout = () => {
     if (!userId) {
-      message.info("Please log in to proceed with checkout");
+      message.error("Please login first!");
       navigate("/login");
       return;
     }
-    navigate("/checkout");
+    dispatch(setBuyNow(false));
+    navigate("/orders/summary");
   };
 
   if (loading) {

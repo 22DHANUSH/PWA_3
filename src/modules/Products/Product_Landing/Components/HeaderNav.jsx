@@ -28,13 +28,24 @@ export default function HeaderNav() {
         <div className="nav-left">
           <nav
             className="nav-links"
-            style={{ display: "flex", alignItems: "center", gap: 16 }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 16,
+              lineHeight: "40px", // match logo height
+            }}
           >
             <Link to="/" aria-label="Go Home" className="nav-logo">
               <img
                 src={Columbialogo}
                 alt="Columbia Sportswear"
-                style={{ height: 80, objectFit: "contain", cursor: "pointer" }}
+                style={{
+                  height: 80, // reduce height for better alignment
+                  objectFit: "contain",
+                  cursor: "pointer",
+                  verticalAlign: "middle",
+                  paddingBottom: "5px",
+                }}
               />
             </Link>
             <Link to="/">Home</Link>
