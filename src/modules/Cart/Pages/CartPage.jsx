@@ -7,7 +7,7 @@ import "../../Cart/Cart.css";
 import { useCart } from "../CartContext";
 const { Title, Text } = Typography;
  
-import { setBuyNow } from "../Orders/redux/orderSlice";   //  added
+import { setBuyNow } from "../../Orders/redux/orderSlice";   //  added
 import { useDispatch } from "react-redux";
 
 
