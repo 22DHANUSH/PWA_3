@@ -3,33 +3,34 @@ import {Row,Col,Image,Typography,Pagination,Spin,message,Button,} from "antd";
 import { useNavigate } from "react-router-dom";
 import {getWishlistItems,getProductImagesWithSas,deleteWishlistItem,} from "./../../users.api";
 import {getProductById,getProductSkuById,} from "./../../../Products/products.api";
+import { DeleteOutlined } from "@ant-design/icons";
 import "./../../WishlistItems/WishlistItems.css";
-
+ 
 const { Title, Text } = Typography;
-
+ 
 const WishlistPage = () => {
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize] = useState(8);
   const [total, setTotal] = useState(0);
-
+ 
   const navigate = useNavigate();
   const userId = localStorage.getItem("userId");
-
+ 
   const fetchWishlist = async (page = 1) => {
     try {
       setLoading(true);
       const items = await getWishlistItems(userId, page, pageSize);
       setTotal(items.length < pageSize ? page * pageSize : page * pageSize + 1);
-
+ 
       const enriched = await Promise.all(
         items.map(async (item) => {
           const sku = await getProductSkuById(item.productSkuId);
           const product = await getProductById(sku.productId);
           const images = await getProductImagesWithSas(item.productSkuId);
           const primaryImage = images.find((img) => img.isPrimary) || images[0];
-
+ 
           return {
             ...item,
             productId: product.productId,
@@ -39,18 +40,18 @@ const WishlistPage = () => {
           };
         })
       );
-
+ 
       setWishlist(enriched);
-    } 
+    }
     catch (err) {
       console.error(err);
       message.error("Failed to Load Wishlist");
-    } 
+    }
     finally {
       setLoading(false);
     }
   };
-
+ 
   const handleRemove = async (wishlistItemId, e) => {
     e.stopPropagation();
     try {
@@ -59,23 +60,23 @@ const WishlistPage = () => {
       setWishlist((prev) =>
         prev.filter((item) => item.wishlistItemId !== wishlistItemId)
       );
-    } 
+    }
     catch (err) {
       console.error(err);
       message.error("Failed to Remove Wishlist Item");
     }
   };
-
+ 
   useEffect(() => {
     if (userId) {
       fetchWishlist(pageNumber);
     }
   }, [pageNumber, userId]);
-
+ 
   return (
     <div className="wishlist-container">
       <Title level={2} className="wishlist-title">My Wishlist</Title>
-
+ 
       {loading ? (
         <Spin size="large" />
       ) : (
@@ -83,7 +84,7 @@ const WishlistPage = () => {
           <Row gutter={[16, 16]} className="wishlist-row">
             {wishlist.map((item) => (
               <Col xs={24} sm={12} md={8} lg={6} xl={6} key={item.wishlistItemId}>
-
+ 
                 <div
                   className="wishlist-card"
                   onClick={() =>
@@ -100,22 +101,23 @@ const WishlistPage = () => {
                   />
                   <div className="wishlist-details">
                     <Text className="product-title">{item.productName}</Text>
-
+ 
                     <Text type="secondary">₹{item.productPrice}</Text>
                   </div>
                   <div className="wishlist-remove">
                     <Button
+                      type = "text"
                       danger
+                      icon={<DeleteOutlined />}
                       onClick={(e) => handleRemove(item.wishlistItemId, e)}
                     >
-                      Remove
                     </Button>
                   </div>
                 </div>
               </Col>
             ))}
           </Row>
-
+ 
           <div className="wishlist-pagination">
             <Pagination
               current={pageNumber}
@@ -130,6 +132,8 @@ const WishlistPage = () => {
     </div>
   );
 };
-
+ 
 export default WishlistPage;
-
+ 
+ 
+ 

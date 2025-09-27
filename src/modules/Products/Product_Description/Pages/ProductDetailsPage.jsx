@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Row, Col, Spin } from "antd";
 import api from "../../../../app/users.axios.js";
 import ProductInfo from "../Components/ProductInfo.jsx";
@@ -6,8 +6,13 @@ import ProductActions from "../Components/ProductActions.jsx";
 import ProductImageGallery from "../Components/ProductImageViewer.jsx";
 import ProductReviews from "../Components/ProductReviews.jsx";
 import ProductOptions from "../Components/ProductOptions.jsx";
-import { getProductById, getSkusByProductId, getReviewsByProductId, getColorsByProductId, getSizesByProductId, getImagesBySku} from '../../products.api.js';
-
+import {
+  getProductById,
+  getSkusByProductId,
+  getReviewsByProductId,
+  getImagesBySku
+} from '../../products.api.js';
+ 
 const ProductDetailPage = ({ productId, productSkuId }) => {
   const [skus, setSkus] = useState([]);
   const [images, setImages] = useState([]);
@@ -15,15 +20,11 @@ const ProductDetailPage = ({ productId, productSkuId }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [product, setProduct] = useState(null);
   const [reviews, setReviews] = useState([]);
- 
+  const [selectedSku, setSelectedSku] = useState(null);
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
-  const [selectedSku, setSelectedSku] = useState(null);
+  const [quantity, setQuantity] = useState(1);
  
-  const [availableColors, setAvailableColors] = useState([]);
-  const [availableSizes, setAvailableSizes] = useState([]);
-  const [colorImages, setColorImages] = useState({});
-
   const userId = localStorage.getItem("userId");
   console.log("User ID from localStorage:", userId);
  
@@ -57,61 +58,35 @@ const ProductDetailPage = ({ productId, productSkuId }) => {
   };
  
   useEffect(() => {
-      const fetchData = async () => {
-        try {
-          const [skuData, productData, reviewsData, colorsData, sizesData] = await Promise.all([
-            getSkusByProductId(productId),
-            getProductById(productId),
-            getReviewsByProductId(productId),
-            getColorsByProductId(productId),
-            getSizesByProductId(productId),
-          ]);
+    const fetchData = async () => {
+      try {
+        const [skuData, productData, reviewsData] = await Promise.all([
+          getSkusByProductId(productId),
+          getProductById(productId),
+          getReviewsByProductId(productId),
+        ]);
  
-          setSkus(Array.isArray(skuData) ? skuData : []);
-          setProduct(productData || null);
-          setReviews(Array.isArray(reviewsData) ? reviewsData : []);
-          setAvailableColors(Array.isArray(colorsData) ? colorsData : []);
-          setAvailableSizes(Array.isArray(sizesData) ? sizesData : []);
+        setSkus(Array.isArray(skuData) ? skuData : []);
+        setProduct(productData || null);
+        setReviews(Array.isArray(reviewsData) ? reviewsData : []);
  
-          const initialSku = skuData.find((sku) => sku.productSkuId === productSkuId) || skuData[0];
-          if (initialSku) {
-            setSelectedColor(initialSku.productColor);
-            setSelectedSize(initialSku.productSize);
-            setSelectedSku(initialSku);
- 
-            const imageData = await getImagesBySku(initialSku.productSkuId);
-            setImages(imageData);
-            const primaryImage = imageData.find((img) => img.isPrimary) || imageData[0];
-            setSelectedImage(primaryImage?.imageUrl || null);
-          }
- 
-          // Fetch primary image for each color
-          const colorImageMap = {};
-          for (const sku of skuData) {
-            const color = sku.productColor;
-            if (!colorImageMap[color]) {
-              try {
-                const imageData = await getImagesBySku(sku.productSkuId);
-                const primaryImage = imageData.find((img) => img.isPrimary) || imageData[0];
-                if (primaryImage) {
-                  colorImageMap[color] = primaryImage.imageUrl;
-                }
-              } catch (error) {
-                console.error(`Error fetching image for color ${color}:`, error);
-              }
-            }
-          }
-          setColorImages(colorImageMap);
-        } catch (error) {
-          console.error("Error fetching product data:", error);
-        } finally {
-          setLoading(false);
+        const initialSku = skuData.find(sku => sku.productSkuId === productSkuId) || skuData[0];
+        if (initialSku) {
+          setSelectedColor(initialSku.productColor);
+          setSelectedSize(initialSku.productSize);
+          setSelectedSku(initialSku);
+          setQuantity(1);
+          await fetchImagesForSku(initialSku.productSkuId);
         }
-      };
-
-  fetchData();
-}, [productId, productSkuId]);
-
+      } catch (error) {
+        console.error("Error fetching product data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+ 
+    fetchData();
+  }, [productId, productSkuId]);
  
   useEffect(() => {
     if (!selectedColor || skus.length === 0) return;
@@ -127,6 +102,7 @@ const ProductDetailPage = ({ productId, productSkuId }) => {
       const matchedSku = skusForColor.find((sku) => sku.productSize === sizeToUse);
       if (matchedSku) {
         setSelectedSku(matchedSku);
+        setQuantity(1);
         fetchImagesForSku(matchedSku.productSkuId);
       }
     }
@@ -141,6 +117,7 @@ const ProductDetailPage = ({ productId, productSkuId }) => {
  
     if (matchedSku) {
       setSelectedSku(matchedSku);
+      setQuantity(1);
       fetchImagesForSku(matchedSku.productSkuId);
     }
   }, [selectedSize]);
@@ -177,20 +154,21 @@ const ProductDetailPage = ({ productId, productSkuId }) => {
               <>
                 <ProductInfo product={product} />
                 <ProductOptions
-                  availableColors={availableColors}
-                  availableSizes={availableSizes}
+                  productId={productId}
+                  productSkuId={productSkuId}
                   selectedColor={selectedColor}
-                  selectedSize={selectedSize}
                   setSelectedColor={setSelectedColor}
+                  selectedSize={selectedSize}
                   setSelectedSize={setSelectedSize}
                   stock={selectedSku.stocks}
-                  colorImages={colorImages}
-                  price={selectedSku.productPrice}
+                  quantity={quantity}
+                  setQuantity={setQuantity}
+                   setSelectedSku={setSelectedSku}
                 />
-                <ProductActions 
-                  stock={selectedSku.stocks} 
-                  price={selectedSku.productPrice} 
-                  userId={userId} 
+                <ProductActions
+                  stock={selectedSku.stocks}
+                  price={selectedSku.productPrice}
+                  userId={userId}
                   productSkuId={selectedSku.productSkuId}
                   product={{
                     productId: product.productId,
@@ -211,7 +189,7 @@ const ProductDetailPage = ({ productId, productSkuId }) => {
           setReviews={setReviews}
           selectedSku={selectedSku}
           currentUserId={1}
-        />       
+        />
       </div>
     </>
   );

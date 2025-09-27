@@ -5,6 +5,8 @@ import { forgotPassword } from "./../../users.api";
 import "./../../Auth/Auth.css";
 import "../../../../assets/styles/global.css";
 import logo from "../../../../assets/images/columbialogo.png";
+import AuthFooter from "../../../Products/Product_Landing/Components/AuthFooter";
+import AuthHeader from "../../../Products/Product_Landing/Components/AuthHeader";
  
 const { Title, Text } = Typography;
  
@@ -38,6 +40,8 @@ export default function ForgotPassword() {
   };
  
   return (
+    <>
+    <AuthHeader />
     <div className="auth-page">
       <div className="auth-left">
         <div className="auth-left-overlay"></div>
@@ -51,7 +55,7 @@ export default function ForgotPassword() {
           </div>
  
           <Title level={3} className="auth-title">Reset Password</Title>
-        
+       
           <Form layout="vertical" onFinish={onFinish}>
             <Form.Item
               label="Email"
@@ -104,5 +108,8 @@ export default function ForgotPassword() {
         </div>
       </div>
     </div>
+    <AuthFooter />
+    </>
   );
 }
+ 

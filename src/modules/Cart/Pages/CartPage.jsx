@@ -2,17 +2,18 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, Row, Col, Typography, Button, Divider, message, Spin, Tag,} from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
-import { getCartByUserId, getCartItemsByCart, updateCartItem, deleteCartItem, getImagesBySku,} from "./cart.api";
-import "./Cart.css";
-import { useCart } from "./CartContext";
+import { getCartByUserId, getCartItemsByCart, updateCartItem, deleteCartItem, getImagesBySku,} from "../cart.api";
+import "../../Cart/Cart.css";
+import { useCart } from "../CartContext";
 const { Title, Text } = Typography;
+ 
 import { setBuyNow } from "../Orders/redux/orderSlice";   //  added
 import { useDispatch } from "react-redux";
 
 
 const getGuestCart = () => JSON.parse(localStorage.getItem("guestCart") || "[]");
 const setGuestCart = (items) => localStorage.setItem("guestCart", JSON.stringify(items));
-
+ 
 const CartPage = () => {
   const [cart, setCart] = useState(null);
   const [items, setItems] = useState([]);
@@ -20,6 +21,7 @@ const CartPage = () => {
   const { refreshCartCount } = useCart();
   const userId = localStorage.getItem("userId");
   const navigate = useNavigate();
+ 
   const dispatch = useDispatch();   // ✅ added
 
   const fetchCart = async () => {
@@ -44,22 +46,22 @@ const CartPage = () => {
           }
         })
       );
-
+ 
       setItems(itemsWithImages);
       setCart(null);
-      await refreshCartCount();   
+      await refreshCartCount();  
       return;
     }
-
+ 
     const { data: cartData } = await getCartByUserId(userId);
     setCart(cartData);
-
+ 
     if (!cartData) {
       setItems([]);
-      await refreshCartCount();   
+      await refreshCartCount();  
       return;
     }
-
+ 
     const { data: itemsData } = await getCartItemsByCart(cartData.cartId);
     const itemsWithImages = await Promise.all(
       itemsData.map(async (item) => {
@@ -79,21 +81,21 @@ const CartPage = () => {
         }
       })
     );
-
+ 
     setItems(itemsWithImages);
-    await refreshCartCount();   
+    await refreshCartCount();  
   } catch (err) {
-    console.error(err);
-    message.error("Error fetching cart");
+    // console.error(err);
+    message.info("Cart is Empty");
   } finally {
     setLoading(false);
   }
 };
-
+ 
   useEffect(() => {
     fetchCart();
   }, []);
-
+ 
   const handleUpdateQuantity = async (cartItemId, value, skuId) => {
     try {
       if (!userId) {
@@ -105,7 +107,7 @@ const CartPage = () => {
         await refreshCartCount();  
         return;
       }
-
+ 
       await updateCartItem(cartItemId, value);
       setItems((prev) =>
         prev.map((item) =>
@@ -117,7 +119,7 @@ const CartPage = () => {
       message.error("Failed to update quantity");
     }
   };
-
+ 
   const handleRemoveItem = async (cartItemId, skuId) => {
     try {
       if (!userId) {
@@ -130,23 +132,23 @@ const CartPage = () => {
         await refreshCartCount();  
         return;
       }
-
+ 
       await deleteCartItem(cartItemId);
       setItems((prev) =>
         prev.filter((item) => item.cartItemId !== cartItemId)
       );
       message.error("Item removed");
-      await refreshCartCount(); 
+      await refreshCartCount();
     } catch {
       message.error("Failed to remove item");
     }
   };
-
+ 
   const subtotal = items.reduce((acc, item) => {
     const price = parseFloat(item.productPrice.replace("$", ""));
     return acc + price * item.quantity;
   }, 0);
-
+ 
   const totalItems = items.reduce((acc, item) => acc + item.quantity, 0);
   const total = subtotal;
 
@@ -168,7 +170,7 @@ const CartPage = () => {
     dispatch(setBuyNow(false));
     navigate("/orders/summary");
   };
-
+ 
   if (loading) {
     return (
       <div className="cart-loading">
@@ -176,7 +178,7 @@ const CartPage = () => {
       </div>
     );
   }
-
+ 
   return (
     <Row gutter={[16, 16]} className="cart-container">
       <Col xs={24} md={16}>
@@ -184,7 +186,7 @@ const CartPage = () => {
         {items.map((item) => {
           const price = parseFloat(item.productPrice.replace("$", ""));
           const itemTotal = price * item.quantity;
-
+ 
           return (
             <Card key={item.cartItemId || item.productSkuId} className="cart-item">
               <Row align="middle">
@@ -201,7 +203,7 @@ const CartPage = () => {
                     className="cart-product-image"
                   />
                 </Col>
-
+ 
                 <Col span={16} className="cart-product-details">
                   <Title
                     level={4}
@@ -215,14 +217,14 @@ const CartPage = () => {
                     {item.productTitle}{" "}
                     {item.isOutOfStock && <Tag color="red">Out of Stock</Tag>}
                   </Title>
-
+ 
                   <Text strong>{item.productPrice}</Text>
                   <div className="cart-product-meta">
                     <Text type="secondary">
                       Size: {item.productSize} | Color: {item.productColor}
                     </Text>
                   </div>
-
+ 
                   <div className="cart-product-quantity">
                     <div className="quantity-inline">
                       <Text style={{ marginRight: 8 }}>Quantity:</Text>
@@ -255,12 +257,12 @@ const CartPage = () => {
                       </Button>
                     </div>
                   </div>
-
+ 
                   <div className="cart-product-total">
                     <Text strong>Total: ${itemTotal.toFixed(2)}</Text>
                   </div>
                 </Col>
-
+ 
                 <Col span={4} className="cart-remove-btn">
                   <Button
                     type="text"
@@ -276,7 +278,7 @@ const CartPage = () => {
           );
         })}
       </Col>
-
+ 
       <Col xs={24} md={8}>
         <Card style={{ marginTop: "50px" }}>
           <Title level={4}>Cart Details </Title>
@@ -311,5 +313,6 @@ const CartPage = () => {
     </Row>
   );
 };
-
+ 
 export default CartPage;
+ 

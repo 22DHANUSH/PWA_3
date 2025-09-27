@@ -1,12 +1,16 @@
 // ProductCatalog.jsx
-import React from "react";
+import React, { useState } from "react";
 import { Row, Col, Card, Spin, Empty, Typography, Button, Pagination, message } from "antd";
 import { HeartOutlined, HeartFilled } from "@ant-design/icons";
 import { useProducts } from "../../ProductContext";
 import { useNavigate } from "react-router-dom";
 import { checkWishlist, addWishlistItem, deleteWishlistItem } from "../../../Users/users.api";
-import { getCartByUserId, createCart, addCartItem, updateCartItem, getCartItemBySku } from "../../../Carts/cart.api";
+import { getCartByUserId, createCart, addCartItem, updateCartItem, getCartItemBySku } from '../../../Cart/cart.api';
 import { useCart } from "../../../Cart/CartContext";
+import { Modal } from "antd";
+import { MinusOutlined, PlusOutlined } from "@ant-design/icons"; 
+import ProductOptions from "../../Product_Description/Components/ProductOptions"; 
+
 
 const { Title } = Typography;
 const getGuestCart = () => JSON.parse(localStorage.getItem("guestCart") || "[]");
@@ -96,7 +100,29 @@ function ProductCatalog() {
   const { products, loading, pagination, setPagination, currentUserId } = useProducts();
   const navigate = useNavigate();
   const { refreshCartCount } = useCart();
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(null);
+  const [quantity, setQuantity] = useState(1); 
+  const [loadingOptions, setLoadingOptions] = useState(true); 
 
+  
+  const handleOptionsLoaded = () => {
+    setLoadingOptions(false); 
+  };
+
+
+  console.log(products)
+  const handleBuyNow = (product) => {
+    setLoadingOptions(true); // Start spinner
+    setSelectedColor(null);
+    setSelectedSize(null);
+    setQuantity(1);
+    setSelectedProduct(product); // ✅ Set product directly
+    setIsModalVisible(true);     // ✅ Show modal immediately
+  };
+  
   const handlePageChange = (page) => {
     setPagination((prev) => ({ ...prev, pageNumber: page }));
   };
@@ -172,13 +198,16 @@ function ProductCatalog() {
                 <Card
                   hoverable
                   style={{ position: "relative" }}
-                  onClick={() => navigate(`/productdetails/${p.productId}/${p.productSkuID}`)}
+                  // onClick={() => navigate(`/productdetails/${p.productId}/${p.productSkuID}`)}
                   cover={
                     <div style={{ position: "relative" }}>
                       <img
                         alt={p.productName || "Product"}
                         src={p.imageUrl?.startsWith("http") ? p.imageUrl : "https://placehold.co/250x250?text=No+Image"}
                         style={{ height: 200, objectFit: "contain", width: "100%" }}
+                        onClick={() =>
+                    navigate(`/productdetails/${p.productId}/${p.productSkuID}`)
+                  }
                       />
                       <WishlistIcon userId={currentUserId} productSkuId={p.productSkuID} />
                     </div>
@@ -190,12 +219,122 @@ function ProductCatalog() {
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
                         <span style={{ fontWeight: 700, fontSize: 20, color: "#222" }}>${p.productPrice ?? "—"}</span>
                         <div style={{ display: "flex", gap: 8 }}>
-                          <Button type="primary" size="middle" onClick={(e) => handleAddToCart(e, p)}>
+                          <Button type="primary" size="middle" onClick={() => handleBuyNow(p)}>
                             Add to Cart
                           </Button>
                           <Button type="default" size="middle">
                             Buy Now
                           </Button>
+                          <Modal
+  
+                            className="no-mask-background"
+                            title="Select Product Options"
+                            visible={isModalVisible}
+                            maskStyle={{ backgroundColor: "transparent" }}
+                            onCancel={() => {
+                              setIsModalVisible(false);
+                              setSelectedProduct(null);
+                              setLoadingOptions(false); // Reset loading state
+                            }}
+                            footer={[
+                              <Button key="cancel" onClick={() => setIsModalVisible(false)}>
+                                Cancel
+                              </Button>,
+                          
+                            <Button
+                              key="addtocart"
+                              type="primary"
+                              onClick={(e) => {
+                                handleAddToCart(e, selectedProduct?.productSkuID);
+                                setIsModalVisible(false);
+                              }}
+                              disabled={loadingOptions}
+                            >
+                              Add to Cart
+                            </Button>,
+
+                            ]}
+                          >
+
+
+                            <div style={{ position: "relative" }}>
+                              {/* Actual content */}
+                              {selectedProduct && (
+                                <>
+                                  <ProductOptions
+                                    productId={selectedProduct.productId}
+                                    productSkuId={selectedProduct.productSkuID}
+                                    selectedColor={selectedColor}
+                                    setSelectedColor={setSelectedColor}
+                                    selectedSize={selectedSize}
+                                    setSelectedSize={setSelectedSize}
+                                    stock={selectedProduct.stock}
+                                    quantity={quantity}
+                                    setQuantity={setQuantity}
+                                    onOptionsLoaded={() => {
+                                      console.log("✅ Product options finished loading");
+                                      setLoadingOptions(false);
+                                    }}
+                                  />
+
+                                  
+                          <Typography.Text strong style={{ display: "block", marginTop: "12px" }}>
+                            Quantity:
+                          </Typography.Text>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              border: "1px solid #000",
+                              borderRadius: "4px",
+                              padding: "4px 8px",
+                              marginTop: "8px",
+                            }}
+                          >
+                            <Button
+                              icon={<MinusOutlined />}
+                              onClick={() => setQuantity((q) => Math.max(1, Number(q) - 1))}
+                              disabled={quantity <= 1}
+                              size="small"
+                            />
+                            <Typography.Text>{quantity}</Typography.Text>
+                            <Button
+                              icon={<PlusOutlined />}
+                              onClick={() =>
+                                setQuantity((q) =>
+                                  Math.min(Number(q) + 1, Number(selectedProduct?.stock || 99))
+                                )
+                              }
+                              disabled={quantity >= Number(selectedProduct?.stock || 99)}
+                              size="small"
+                            />
+                          </div>
+
+                                </>
+                              )}
+
+                              {/* Overlay spinner */}
+                              {loadingOptions && (
+                                <div
+                                  style={{
+                                    position: "absolute",
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    backgroundColor: "rgba(255, 255, 255, 0.7)",
+                                    zIndex: 10,
+                                    display: "flex",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                  }}
+                                >
+                                  <Spin tip="Updating product options..." />
+                                </div>
+                              )}
+                            </div>
+                          </Modal>
                         </div>
                       </div>
                     }

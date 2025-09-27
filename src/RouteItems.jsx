@@ -8,7 +8,7 @@ import Addresses from "./modules/Users/Addresses/Pages/Addresses";
 import SearchAndFilterPage from "./modules/Products/Product_Catalog/Pages/SearchAndFilterPage";
 import ProductDetailPageWrapper from "./modules/Products/Product_Description/ProductDetailPageWrapper";
 import WishlistPage from "./modules/Users/WishlistItems/Pages/WishlistItems";
-import CartPage from "./modules/Cart/CartPage";
+import CartPage from "./modules/Cart/Pages/CartPage";
 import ForgotPassword from "./modules/Users/Auth/Pages/ForgotPassword";
 import OrderReview from "./modules/Orders/OrderSummary/Pages/OrderReview";
 import MyOrder from "./modules/Orders/OrderHistory/Pages/MyOrder";
@@ -33,6 +33,9 @@ const RouteItems = () => {
       <Route path="/wishlist" element={<WishlistPage/>}/>
       <Route path="/cart" element={<CartPage/>}/>
       <Route path="/checkout" element={<CartPage/>}/>
+
+      <Route path="/forgotpassword" element={<ForgotPassword />} />
+
       <Route path="/pastorder" element={<MyOrder />} />
       <Route path="/orders/summary" element={<OrderReview />} />
       <Route path="/payment" element={<PaymentPage/>}/>

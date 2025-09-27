@@ -7,15 +7,17 @@ import { setUser } from "./../../users.slice";
 import "./../../Auth/Auth.css";
 import "../../../../assets/styles/global.css";
 import logo from "../../../../assets/images/columbialogo.png";
-import { mergeGuestCart } from "../../../Cart/cart.api"; 
-
+import { mergeGuestCart } from "../../../Cart/cart.api";
+import AuthFooter from "../../../Products/Product_Landing/Components/AuthFooter";
+import AuthHeader from "../../../Products/Product_Landing/Components/AuthHeader";
+ 
 const { Title } = Typography;
-
+ 
 export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
+ 
   const onFinish = async (values) => {
     setLoading(true);
     try {
@@ -23,10 +25,10 @@ export default function Login() {
       message.success(res.message || "Login successful");
       if (res.userId) {
         dispatch(setUser({ userId: res.userId, email: values.email }));
-
+ 
         // Merge guest cart into DB cart
         await mergeGuestCart(res.userId);
-        
+       
         navigate("/products");
       }
     } catch (err) {
@@ -35,24 +37,25 @@ export default function Login() {
       setLoading(false);
     }
   };
-
+ 
   return (
+    <>
+    <AuthHeader />
     <div className="auth-page">
       <div className="auth-left">
         <div className="auth-left-overlay"></div>
       </div>
-
+ 
       <div className="auth-right">
         <div className="auth-card">
           <div className="auth-logo">
             <img src={logo} alt="Brand Logo" />
-            <Title level={4}>Columbia Sportswear Company</Title>
           </div>
-
+ 
           <Title level={3} className="auth-title">
-            Welcome Back!
+            Welcome back, happy shopping!
           </Title>
-
+ 
           <Form layout="vertical" onFinish={onFinish}>
             <Form.Item
               label="Email"
@@ -67,7 +70,7 @@ export default function Login() {
             >
               <Input placeholder="Email" />
             </Form.Item>
-
+ 
             <Form.Item
               label="Password"
               name="Password"
@@ -77,7 +80,7 @@ export default function Login() {
             >
               <Input.Password placeholder="••••••••" />
             </Form.Item>
-
+ 
             <Form.Item>
               <Button
                 htmlType="submit"
@@ -104,5 +107,9 @@ export default function Login() {
         </div>
       </div>
     </div>
+    <AuthFooter />
+    </>
   );
 }
+ 
+ 
