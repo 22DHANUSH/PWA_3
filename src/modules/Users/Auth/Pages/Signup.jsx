@@ -16,7 +16,7 @@ import { signup } from "./../../users.api";
 import { setUser } from "./../../users.slice";
 import "../auth.css";
 import "../../../../assets/styles/global.css";
-import logo from "../../../../assets/images/columbialogo.png";
+import logo from "/images/columbialogo.png";
 import { mergeGuestCart } from "../../../Cart/cart.api";
 import AuthFooter from "../../../Products/Product_Landing/Components/AuthFooter";
 import AuthHeader from "../../../Products/Product_Landing/Components/AuthHeader";

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { forgotPassword } from "./../../users.api";
 import "./../../Auth/Auth.css";
 import "../../../../assets/styles/global.css";
-import logo from "../../../../assets/images/columbialogo.png";
+import logo from "/images/columbialogo.png";
 import AuthFooter from "../../../Products/Product_Landing/Components/AuthFooter";
 import AuthHeader from "../../../Products/Product_Landing/Components/AuthHeader";
  

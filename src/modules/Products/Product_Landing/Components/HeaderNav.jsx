@@ -1,7 +1,7 @@
 import { HeartOutlined, ShoppingCartOutlined, UserOutlined,} from "@ant-design/icons";
 import { Input, Badge } from "antd"; 
 import { Link, useLocation } from "react-router-dom";
-import Columbialogo from "../../../../assets/images/columbialogo.png";
+import Columbialogo from "/images/columbialogo.png";
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { useCart } from "../../../Cart/CartContext"; 
