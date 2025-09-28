@@ -2,17 +2,17 @@ import { payment_api, payment_api_api } from "../../app/payment.axios";
 
 // Razorpay APIs
 export const createRazorpayOrder = (amount) =>
-  payment_api.post("/CreateOrderUSD", { Amount: amount });
+  payment_api.post("CreateOrderUSD", { Amount: amount });
 
 export const verifyRazorpayPayment = (paymentDetails) =>
-  payment_api.post("/VerifyPayment", paymentDetails);
+  payment_api.post("VerifyPayment", paymentDetails);
 
 // Braintree APIs (override baseURL)
 export const getBraintreeClientToken = () =>
-  payment_api.get("/GenerateClientToken");
+  payment_api.get("GenerateClientToken");
 
 export const processBraintreePayment = (paymentData) =>
-  payment_api.post("/ProcessPayment", paymentData);
+  payment_api.post("ProcessPayment", paymentData);
 
 export async function createPayment({
   paymentMethod,
@@ -24,7 +24,7 @@ export async function createPayment({
   transactionId,
   paymentGateway,
 }) {
-  const res = await payment_api_api.post("/payments", {
+  const res = await payment_api_api.post("payments", {
     paymentMethod,
     paymentStatus,
     paymentDate,

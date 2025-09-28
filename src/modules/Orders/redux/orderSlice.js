@@ -59,7 +59,8 @@ export const fetchCartSummary = createAsyncThunk(
       const itemsRes = await cart_api.get(
         `/cart_items/display/by-cart/${cartId}`
       );
-      return { ...itemsRes.data, cartId };
+      console.log("itemsRes",itemsRes);
+      return { ...itemsRes.data, cartId };//should return an array
     } catch (err) {
       return rejectWithValue("Failed to fetch cart summary");
     }

@@ -22,7 +22,7 @@ setOrderMeta ,
 } from "../../redux/orderSlice";
 import { useNavigate } from 'react-router-dom';
 
-import PromoCode from "../Components/Promocode";
+import PromoCode from "../Components/PromoCode.jsx";
 import { getImagesBySku } from "../../../Cart/cart.api";
 import { fetchAddresses } from "../../../Users/users.api";
 

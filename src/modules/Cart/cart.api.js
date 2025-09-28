@@ -25,6 +25,10 @@ export const getCartItemsByCart = (cartId) => cart_api.get(`/cart_items/display/
 
 export const getCartItemBySku = (cartId, skuId) => cart_api.get(`/cart_items/${cartId}/sku/${skuId}`);
 
+export const clearCartByUser = (userId) =>
+  cart_api.delete(`/cart_items/clear/user/${userId}`);
+
+
 export async function getImagesBySku(skuId) {
   try {
     const response = await user_api.get(`/blob/GenerateSasToken/${skuId}/1`);

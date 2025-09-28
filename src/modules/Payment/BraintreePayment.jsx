@@ -8,6 +8,7 @@ import {
   processBraintreePayment,
   createPayment,
 } from "../Payment/payment.api";
+import { clearCartByUser } from "../Cart/cart.api.js";
 
 export default function BraintreePayment({
   amount,
@@ -106,6 +107,8 @@ export default function BraintreePayment({
           console.log(payData);
           const res = await createPayment(payData);
           console.log(res);
+          const deleted =await clearCartByUser(userId);
+          console.log(deleted);
 
           navigate("/pastorder");
         } else {

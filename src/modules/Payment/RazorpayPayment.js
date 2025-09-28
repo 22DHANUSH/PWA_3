@@ -5,6 +5,7 @@ import {
   createPayment,
 } from "../Payment/payment.api";
 import { useSelector } from "react-redux";
+import { clearCartByUser } from "../Cart/cart.api.js";
 const chekout_url =import.meta.env.VITE_RAZOR_CHECKOUT_URL;
 export async function handleRazorpayPayment({
   amount,
@@ -68,8 +69,22 @@ export async function handleRazorpayPayment({
           };
 
           await createPayment(payData);
+          const deleted =await clearCartByUser(userId);
+          console.log(deleted);
           window.location.href = "/pastorder";
         } else {
+          const payData = {
+            paymentMethod: verifyData.data.paymentMethod,
+            paymentStatus: verifyData.data.success.toString(),
+            paymentDate: new Date().toISOString(),
+            amount: orderAmount,
+            orderId,
+            userId,
+            transactionId: verifyData.data.transactionId,
+            paymentGateway: "Razorpay",
+          };
+
+          await createPayment(payData);
           message.error(verifyData.data.message);
         }
       } catch (err) {
