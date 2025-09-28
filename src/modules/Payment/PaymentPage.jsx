@@ -24,6 +24,7 @@ export default function PaymentPage() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [address, setAddress] = useState({});
   const emailId = useSelector((state) => state.auth.email);
+  const navigate= useNavigate();
 
   const userId = useSelector((state) => state.auth.userId);
 
@@ -162,6 +163,7 @@ export default function PaymentPage() {
                   borderRadius: 8,
                   background: "#f5f5f5",
                 }}
+                onClick={()=> navigate("/cart")}
               >
                 Back to Cart
               </Button>

@@ -6,7 +6,7 @@ import {
 } from "../Payment/payment.api";
 import { useSelector } from "react-redux";
 import { clearCartByUser } from "../Cart/cart.api.js";
-const chekout_url = import.meta.env.VITE_RAZOR_CHECKOUT_URL;
+const checkout_url =import.meta.env.VITE_RAZOR_CHECKOUT_URL;
 export async function handleRazorpayPayment({
   amount,
   userId,
@@ -18,7 +18,7 @@ export async function handleRazorpayPayment({
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
       const script = document.createElement("script");
-      script.src = chekout_url;
+      script.src = checkout_url;
       script.onload = () => resolve(true);
       script.onerror = () => resolve(false);
       document.body.appendChild(script);
