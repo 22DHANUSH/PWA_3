@@ -1,19 +1,37 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, Row, Col, Typography, Button, Divider, message, Spin, Tag,} from "antd";
+import {
+  Card,
+  Row,
+  Col,
+  Typography,
+  Button,
+  Divider,
+  message,
+  Spin,
+  Tag,
+} from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
-import { getCartByUserId, getCartItemsByCart, updateCartItem, deleteCartItem, getImagesBySku,} from "../cart.api";
+import {
+  getCartByUserId,
+  getCartItemsByCart,
+  updateCartItem,
+  deleteCartItem,
+  getImagesBySku,
+} from "../cart.api";
 import "../../Cart/Cart.css";
 import { useCart } from "../CartContext";
 const { Title, Text } = Typography;
- 
-import { setBuyNow } from "../../Orders/redux/orderSlice";   //  added
+
+import { setBuyNow } from "../../Orders/redux/orderSlice"; //  added
 import { useDispatch } from "react-redux";
+import useGA4Tracking from "../../../../useGA4Tracking";
 
+const getGuestCart = () =>
+  JSON.parse(localStorage.getItem("guestCart") || "[]");
+const setGuestCart = (items) =>
+  localStorage.setItem("guestCart", JSON.stringify(items));
 
-const getGuestCart = () => JSON.parse(localStorage.getItem("guestCart") || "[]");
-const setGuestCart = (items) => localStorage.setItem("guestCart", JSON.stringify(items));
- 
 const CartPage = () => {
   const [cart, setCart] = useState(null);
   const [items, setItems] = useState([]);
@@ -21,16 +39,52 @@ const CartPage = () => {
   const { refreshCartCount } = useCart();
   const userId = localStorage.getItem("userId");
   const navigate = useNavigate();
- 
-  const dispatch = useDispatch();   // ✅ added
+  const { trackBeginCheckout } = useGA4Tracking();
+
+  const dispatch = useDispatch(); // ✅ added
 
   const fetchCart = async () => {
-  try {
-    setLoading(true);
-    if (!userId) {
-      let guestItems = getGuestCart();
+    try {
+      setLoading(true);
+      if (!userId) {
+        let guestItems = getGuestCart();
+        const itemsWithImages = await Promise.all(
+          guestItems.map(async (item) => {
+            try {
+              const images = await getImagesBySku(item.productSkuId);
+              return {
+                ...item,
+                productImage: images[0]?.imageUrl || item.productImage,
+              };
+            } catch (err) {
+              console.error(
+                `Image fetch failed for SKU ${item.productSkuId}:`,
+                err
+              );
+              return item;
+            }
+          })
+        );
+
+        setItems(itemsWithImages);
+        setCart(null);
+        await refreshCartCount();
+        return;
+      }
+
+      const { data: cartData } = await getCartByUserId(userId);
+      setCart(cartData);
+
+      if (!cartData) {
+        setItems([]);
+        await refreshCartCount();
+        return;
+      }
+
+      const { data: itemsData } = await getCartItemsByCart(cartData.cartId);
       const itemsWithImages = await Promise.all(
-        guestItems.map(async (item) => {
+        itemsData.map(async (item) => {
+          if (!item.productSkuId) return item;
           try {
             const images = await getImagesBySku(item.productSkuId);
             return {
@@ -46,56 +100,21 @@ const CartPage = () => {
           }
         })
       );
- 
+
       setItems(itemsWithImages);
-      setCart(null);
-      await refreshCartCount();  
-      return;
+      await refreshCartCount();
+    } catch (err) {
+      // console.error(err);
+      message.info("Cart is Empty");
+    } finally {
+      setLoading(false);
     }
- 
-    const { data: cartData } = await getCartByUserId(userId);
-    setCart(cartData);
- 
-    if (!cartData) {
-      setItems([]);
-      await refreshCartCount();  
-      return;
-    }
- 
-    const { data: itemsData } = await getCartItemsByCart(cartData.cartId);
-    const itemsWithImages = await Promise.all(
-      itemsData.map(async (item) => {
-        if (!item.productSkuId) return item;
-        try {
-          const images = await getImagesBySku(item.productSkuId);
-          return {
-            ...item,
-            productImage: images[0]?.imageUrl || item.productImage,
-          };
-        } catch (err) {
-          console.error(
-            `Image fetch failed for SKU ${item.productSkuId}:`,
-            err
-          );
-          return item;
-        }
-      })
-    );
- 
-    setItems(itemsWithImages);
-    await refreshCartCount();  
-  } catch (err) {
-    // console.error(err);
-    message.info("Cart is Empty");
-  } finally {
-    setLoading(false);
-  }
-};
- 
+  };
+
   useEffect(() => {
     fetchCart();
   }, []);
- 
+
   const handleUpdateQuantity = async (cartItemId, value, skuId) => {
     try {
       if (!userId) {
@@ -104,22 +123,22 @@ const CartPage = () => {
         );
         setGuestCart(guestCart);
         setItems(guestCart);
-        await refreshCartCount();  
+        await refreshCartCount();
         return;
       }
- 
+
       await updateCartItem(cartItemId, value);
       setItems((prev) =>
         prev.map((item) =>
           item.cartItemId === cartItemId ? { ...item, quantity: value } : item
         )
       );
-      await refreshCartCount();  
+      await refreshCartCount();
     } catch {
       message.error("Failed to update quantity");
     }
   };
- 
+
   const handleRemoveItem = async (cartItemId, skuId) => {
     try {
       if (!userId) {
@@ -129,26 +148,24 @@ const CartPage = () => {
         setGuestCart(guestCart);
         setItems(guestCart);
         message.error("Item removed");
-        await refreshCartCount();  
+        await refreshCartCount();
         return;
       }
- 
+
       await deleteCartItem(cartItemId);
-      setItems((prev) =>
-        prev.filter((item) => item.cartItemId !== cartItemId)
-      );
+      setItems((prev) => prev.filter((item) => item.cartItemId !== cartItemId));
       message.error("Item removed");
       await refreshCartCount();
     } catch {
       message.error("Failed to remove item");
     }
   };
- 
+
   const subtotal = items.reduce((acc, item) => {
     const price = parseFloat(item.productPrice.replace("$", ""));
     return acc + price * item.quantity;
   }, 0);
- 
+
   const totalItems = items.reduce((acc, item) => acc + item.quantity, 0);
   const total = subtotal;
 
@@ -161,16 +178,24 @@ const CartPage = () => {
   //   navigate("/checkout");
   // };
 
-    const handleCheckout = () => {
+  const handleCheckout = () => {
     if (!userId) {
       message.error("Please login first!");
       navigate("/login");
       return;
     }
+    const gaItems = items.map((item) => ({
+      item_id: item.productSkuId,
+      item_name: item.productTitle || "Unnamed Product",
+      price: item.productPrice,
+      quantity: item.quantity,
+    }));
+
+    trackBeginCheckout({ items: gaItems, total: subtotal }); // Fire GA4 event here
     dispatch(setBuyNow(false));
     navigate("/orders/summary");
   };
- 
+
   if (loading) {
     return (
       <div className="cart-loading">
@@ -178,7 +203,7 @@ const CartPage = () => {
       </div>
     );
   }
- 
+
   return (
     <Row gutter={[16, 16]} className="cart-container">
       <Col xs={24} md={16}>
@@ -186,14 +211,19 @@ const CartPage = () => {
         {items.map((item) => {
           const price = parseFloat(item.productPrice.replace("$", ""));
           const itemTotal = price * item.quantity;
- 
+
           return (
-            <Card key={item.cartItemId || item.productSkuId} className="cart-item">
+            <Card
+              key={item.cartItemId || item.productSkuId}
+              className="cart-item"
+            >
               <Row align="middle">
                 <Col
                   span={4}
                   onClick={() =>
-                    navigate(`/productdetails/${item.productId}/${item.productSkuId}`)
+                    navigate(
+                      `/productdetails/${item.productId}/${item.productSkuId}`
+                    )
                   }
                   className="cart-product-clickable"
                 >
@@ -203,7 +233,7 @@ const CartPage = () => {
                     className="cart-product-image"
                   />
                 </Col>
- 
+
                 <Col span={16} className="cart-product-details">
                   <Title
                     level={4}
@@ -217,14 +247,14 @@ const CartPage = () => {
                     {item.productTitle}{" "}
                     {item.isOutOfStock && <Tag color="red">Out of Stock</Tag>}
                   </Title>
- 
+
                   <Text strong>{item.productPrice}</Text>
                   <div className="cart-product-meta">
                     <Text type="secondary">
                       Size: {item.productSize} | Color: {item.productColor}
                     </Text>
                   </div>
- 
+
                   <div className="cart-product-quantity">
                     <div className="quantity-inline">
                       <Text style={{ marginRight: 8 }}>Quantity:</Text>
@@ -257,12 +287,12 @@ const CartPage = () => {
                       </Button>
                     </div>
                   </div>
- 
+
                   <div className="cart-product-total">
                     <Text strong>Total: ${itemTotal.toFixed(2)}</Text>
                   </div>
                 </Col>
- 
+
                 <Col span={4} className="cart-remove-btn">
                   <Button
                     type="text"
@@ -278,7 +308,7 @@ const CartPage = () => {
           );
         })}
       </Col>
- 
+
       <Col xs={24} md={8}>
         <Card style={{ marginTop: "50px" }}>
           <Title level={4}>Cart Details </Title>
@@ -313,6 +343,5 @@ const CartPage = () => {
     </Row>
   );
 };
- 
+
 export default CartPage;
- 

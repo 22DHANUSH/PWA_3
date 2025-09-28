@@ -10,9 +10,10 @@ import {
   getProductById,
   getSkusByProductId,
   getReviewsByProductId,
-  getImagesBySku
-} from '../../products.api.js';
- 
+  getImagesBySku,
+} from "../../products.api.js";
+import useGA4Tracking from "../../../../../useGA4Tracking.js";
+
 const ProductDetailPage = ({ productId, productSkuId }) => {
   const [skus, setSkus] = useState([]);
   const [images, setImages] = useState([]);
@@ -24,10 +25,19 @@ const ProductDetailPage = ({ productId, productSkuId }) => {
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
   const [quantity, setQuantity] = useState(1);
- 
+  const { trackViewItem } = useGA4Tracking();
   const userId = localStorage.getItem("userId");
-  console.log("User ID from localStorage:", userId);
- 
+  useEffect(() => {
+    if (product == null) return;
+
+    trackViewItem({
+      productSkuId: selectedSku.productSkuId,
+      productTitle: product.productName || p.productTitle,
+      productPrice: Number(selectedSku.productPrice) || 0,
+      productId: product.productId,
+    });
+  }, [product]);
+
   const fetchImagesForSku = async (skuId) => {
     if (!skuId) {
       console.warn("SKU ID is missing");
@@ -35,28 +45,34 @@ const ProductDetailPage = ({ productId, productSkuId }) => {
       setSelectedImage(null);
       return;
     }
- 
+
     try {
       const response = await api.get(`/blob/GenerateSasToken/${skuId}/1`);
-      const imageData = Array.isArray(response.data) ? response.data.slice(0, 9) : [];
- 
+      const imageData = Array.isArray(response.data)
+        ? response.data.slice(0, 9)
+        : [];
+
       if (imageData.length === 0) {
         setImages([]);
         setSelectedImage(null);
         return;
       }
- 
+
       setImages(imageData);
- 
-      const primaryImage = imageData.find((img) => img.isPrimary) || imageData[0];
+
+      const primaryImage =
+        imageData.find((img) => img.isPrimary) || imageData[0];
       setSelectedImage(primaryImage.imageUrl);
     } catch (error) {
-      console.error(`Failed to fetch SAS images for SKU ${skuId}:`, error.message);
+      console.error(
+        `Failed to fetch SAS images for SKU ${skuId}:`,
+        error.message
+      );
       setImages([]);
       setSelectedImage(null);
     }
   };
- 
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -65,12 +81,14 @@ const ProductDetailPage = ({ productId, productSkuId }) => {
           getProductById(productId),
           getReviewsByProductId(productId),
         ]);
- 
+
         setSkus(Array.isArray(skuData) ? skuData : []);
         setProduct(productData || null);
         setReviews(Array.isArray(reviewsData) ? reviewsData : []);
- 
-        const initialSku = skuData.find(sku => sku.productSkuId === productSkuId) || skuData[0];
+
+        const initialSku =
+          skuData.find((sku) => sku.productSkuId === productSkuId) ||
+          skuData[0];
         if (initialSku) {
           setSelectedColor(initialSku.productColor);
           setSelectedSize(initialSku.productSize);
@@ -84,22 +102,28 @@ const ProductDetailPage = ({ productId, productSkuId }) => {
         setLoading(false);
       }
     };
- 
+
     fetchData();
   }, [productId, productSkuId]);
- 
+
   useEffect(() => {
     if (!selectedColor || skus.length === 0) return;
- 
-    const skusForColor = skus.filter((sku) => sku.productColor === selectedColor);
- 
+
+    const skusForColor = skus.filter(
+      (sku) => sku.productColor === selectedColor
+    );
+
     if (skusForColor.length > 0) {
       const validSizes = skusForColor.map((sku) => sku.productSize);
-      const sizeToUse = validSizes.includes(selectedSize) ? selectedSize : validSizes[0];
- 
+      const sizeToUse = validSizes.includes(selectedSize)
+        ? selectedSize
+        : validSizes[0];
+
       setSelectedSize(sizeToUse);
- 
-      const matchedSku = skusForColor.find((sku) => sku.productSize === sizeToUse);
+
+      const matchedSku = skusForColor.find(
+        (sku) => sku.productSize === sizeToUse
+      );
       if (matchedSku) {
         setSelectedSku(matchedSku);
         setQuantity(1);
@@ -107,21 +131,22 @@ const ProductDetailPage = ({ productId, productSkuId }) => {
       }
     }
   }, [selectedColor]);
- 
+
   useEffect(() => {
     if (!selectedSize || !selectedColor || skus.length === 0) return;
- 
+
     const matchedSku = skus.find(
-      (sku) => sku.productColor === selectedColor && sku.productSize === selectedSize
+      (sku) =>
+        sku.productColor === selectedColor && sku.productSize === selectedSize
     );
- 
+
     if (matchedSku) {
       setSelectedSku(matchedSku);
       setQuantity(1);
       fetchImagesForSku(matchedSku.productSkuId);
     }
   }, [selectedSize]);
- 
+
   if (loading || !selectedSku) {
     return (
       <div
@@ -136,7 +161,7 @@ const ProductDetailPage = ({ productId, productSkuId }) => {
       </div>
     );
   }
- 
+
   return (
     <>
       <div style={{ padding: "0 2rem", marginTop: "2rem" }}>
@@ -148,7 +173,7 @@ const ProductDetailPage = ({ productId, productSkuId }) => {
               onSelectImage={setSelectedImage}
             />
           </Col>
- 
+
           <Col xs={24} md={12}>
             {product && (
               <>
@@ -163,7 +188,7 @@ const ProductDetailPage = ({ productId, productSkuId }) => {
                   stock={selectedSku.stocks}
                   quantity={quantity}
                   setQuantity={setQuantity}
-                   setSelectedSku={setSelectedSku}
+                  setSelectedSku={setSelectedSku}
                 />
                 <ProductActions
                   stock={selectedSku.stocks}
@@ -172,18 +197,18 @@ const ProductDetailPage = ({ productId, productSkuId }) => {
                   productSkuId={selectedSku.productSkuId}
                   product={{
                     productId: product.productId,
-                    productTitle: product.productTitle,
+                    productTitle: product.productName,
                     productPrice: selectedSku.productPrice,
                     productSize: selectedSku.productSize,
                     productColor: selectedSku.productColor,
-                    imageUrl: images[0]?.imageUrl || ""
+                    imageUrl: images[0]?.imageUrl || "",
                   }}
                 />
               </>
             )}
           </Col>
         </Row>
- 
+
         <ProductReviews
           reviews={reviews}
           setReviews={setReviews}
@@ -194,6 +219,5 @@ const ProductDetailPage = ({ productId, productSkuId }) => {
     </>
   );
 };
- 
+
 export default ProductDetailPage;
- 

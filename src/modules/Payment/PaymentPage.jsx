@@ -8,40 +8,38 @@ import {
   Col,
   Divider,
 } from "antd";
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import BraintreePayment from "./BraintreePayment";
 import { handleRazorpayPayment } from "./RazorpayPayment";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import {getUser,fetchAddresses} from "../Users/users.api";
+import { getUser, fetchAddresses } from "../Users/users.api";
 
 const { Title, Text, Link } = Typography;
 
 export default function PaymentPage() {
   const [paymentMethod, setPaymentMethod] = useState("razorpay");
   const [showBraintree, setShowBraintree] = useState(false);
-  const [userName,setUserName] = useState("");
-  const [phoneNumber,setPhoneNumber] = useState("");
+  const [userName, setUserName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [address, setAddress] = useState({});
   const emailId = useSelector((state) => state.auth.email);
-  console.log(emailId)
 
   const userId = useSelector((state) => state.auth.userId);
 
   const { orderId, totalAmount } = useSelector((state) => state.order);
-useEffect(() => {
-  const fetchUser = async () => {
-    try {
-      const res = await getUser(userId);
-      setUserName(res.firstName);
-      setPhoneNumber(res.phoneNumber);
-      console.log(res)
-    } catch (err) {
-      console.error("Failed to fetch user:", err);
-    }
-  };
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await getUser(userId);
+        setUserName(res.firstName);
+        setPhoneNumber(res.phoneNumber);
+      } catch (err) {
+        console.error("Failed to fetch user:", err);
+      }
+    };
 
-  const fetchPrimaryAddress = async () => {
+    const fetchPrimaryAddress = async () => {
       try {
         const addresses = await fetchAddresses(userId);
         const primary = addresses.find((a) => a.isPrimary) || addresses[0];
@@ -51,17 +49,23 @@ useEffect(() => {
       }
     };
 
-  if (userId) {
-    fetchUser();
-    fetchPrimaryAddress();
-  }
-}, [userId]);
-console.log(address)
-
+    if (userId) {
+      fetchUser();
+      fetchPrimaryAddress();
+    }
+  }, [userId]);
+  console.log(address);
 
   const handlePayClick = () => {
     if (paymentMethod === "razorpay") {
-      handleRazorpayPayment({ amount: totalAmount, userId, orderId,userName,phoneNumber,emailId });
+      handleRazorpayPayment({
+        amount: totalAmount,
+        userId,
+        orderId,
+        userName,
+        phoneNumber,
+        emailId,
+      });
     } else if (paymentMethod === "braintree") {
       setShowBraintree(true);
     }
@@ -78,11 +82,16 @@ console.log(address)
         <Row gutter={[32, 32]}>
           {/* Left Side */}
           <Col xs={24} md={14}>
-            <Card size="small" style={{ marginBottom: "1.5rem", borderRadius: 8 }}>
+            <Card
+              size="small"
+              style={{ marginBottom: "1.5rem", borderRadius: 8 }}
+            >
               <Title level={5}>Delivery Address</Title>
               <Text strong>{userName}</Text>
               <br />
-              <Text>{address.addressLine1}, {address.addressLine2}</Text>
+              <Text>
+                {address.addressLine1}, {address.addressLine2}
+              </Text>
               <br />
             </Card>
 
@@ -153,7 +162,6 @@ console.log(address)
                   borderRadius: 8,
                   background: "#f5f5f5",
                 }}
-                
               >
                 Back to Cart
               </Button>
@@ -161,12 +169,13 @@ console.log(address)
               {/* Braintree Popup */}
               {showBraintree && (
                 <div style={{ marginTop: "1.5rem" }}>
-                  <BraintreePayment amount={totalAmount} 
-                  firstName = {userName} 
-                  emailId = {emailId}
-                  orderId = {orderId}
-                  userId = {userId}
-                  address = {address}
+                  <BraintreePayment
+                    amount={totalAmount}
+                    firstName={userName}
+                    emailId={emailId}
+                    orderId={orderId}
+                    userId={userId}
+                    address={address}
                   />
                 </div>
               )}

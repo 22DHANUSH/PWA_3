@@ -18,9 +18,10 @@ import {
   fetchCartSummary,
   confirmOrder,
   createOrder,
-setOrderMeta ,
+  setOrderMeta,
 } from "../../redux/orderSlice";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
+import useGA4Tracking from "../../../../../useGA4Tracking";
 
 import PromoCode from "../Components/PromoCode.jsx";
 import { getImagesBySku } from "../../../Cart/cart.api";
@@ -36,14 +37,13 @@ export default function OrderReview() {
 
   const userId = useSelector((state) => state.auth.userId);
 
-
-
   const [appliedDiscount, setAppliedDiscount] = useState(null);
   const [summary, setSummary] = useState({});
   const [orderItems, setOrderItems] = useState([]);
   const [address, setAddress] = useState({});
   const [orderMetaDetail, setOrderMetaDetail] = useState({});
   const [skuIds, setSkuIds] = useState([]);
+  const { trackPurchase } = useGA4Tracking();
 
   useEffect(() => {
     if (!userId) {
@@ -128,6 +128,7 @@ export default function OrderReview() {
       (acc, item) => acc + item.totalItemPrice,
       0
     );
+
     const discountAmount = appliedDiscount?.discountAmount || 0;
     const total =
       appliedDiscount?.totalAfterDiscount ?? subtotal - discountAmount;
@@ -139,6 +140,7 @@ export default function OrderReview() {
       total,
     });
   }, [appliedDiscount, orderItems]);
+
   console.log(orderItems);
   const handleConfirmOrder = async () => {
     if (!userId || !summary.total || !address) {
@@ -155,9 +157,21 @@ export default function OrderReview() {
         addressId,
         totalAmount,
       });
-      console.log(createdOrder)
       // Step 2: Confirm the order items
       const result = await confirmOrder({ orderItems, createdOrder });
+      const gaItems = orderItems.map((item) => ({
+        item_id: item.productSkuId,
+        item_name: item.name || "Unnamed Product",
+        price: Number(item.price),
+        quantity: item.quantity,
+      }));
+
+      trackPurchase({
+        items: gaItems,
+        value: totalAmount,
+        transaction_id: createdOrder,
+        currency: "USD",
+      });
       dispatch(
         setOrderMeta({
           orderId: createdOrder,
@@ -168,8 +182,7 @@ export default function OrderReview() {
       console.log(result);
 
       message.success("Order confirmed successfully!");
-       navigate('/payment');
-
+      navigate("/payment");
     } catch (err) {
       console.error("Order confirmation failed:", err);
       message.error("Order confirmation failed");
@@ -179,7 +192,7 @@ export default function OrderReview() {
   const formatCurrency = (amount) =>
     new Intl.NumberFormat("en-IN", {
       style: "currency",
-      currency:"USD",
+      currency: "USD",
     }).format(isNaN(amount) ? 0 : amount);
 
   const columns = [

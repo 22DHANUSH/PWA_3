@@ -20,18 +20,17 @@ const ProductOptions = ({
   quantity,
   setQuantity,
   onOptionsLoaded,
-  
   setSelectedSku,
-
 }) => {
   const [availableColors, setAvailableColors] = useState([]);
   const [availableSizes, setAvailableSizes] = useState([]);
   const [colorImages, setColorImages] = useState({});
-  //const [selectedSku, setSelectedSku] = useState(null);
   const [skus, setSkus] = useState([]);
   const [price, setPrice] = useState(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchData = async () => {
       try {
         const [skuData, colorsData, sizesData] = await Promise.all([
@@ -39,6 +38,8 @@ const ProductOptions = ({
           getColorsByProductId(productId),
           getSizesByProductId(productId),
         ]);
+
+        if (cancelled) return;
 
         setSkus(Array.isArray(skuData) ? skuData : []);
         setAvailableColors(Array.isArray(colorsData) ? colorsData : []);
@@ -54,7 +55,7 @@ const ProductOptions = ({
           setQuantity(1);
         }
 
-        // ✅ Fetch primary image for each color
+        // Fetch primary image for each color
         const colorImageMap = {};
         for (const sku of skuData) {
           const color = sku.productColor;
@@ -70,15 +71,18 @@ const ProductOptions = ({
             }
           }
         }
-        setColorImages(colorImageMap);
+        if (!cancelled) setColorImages(colorImageMap);
       } catch (error) {
         console.error("Error fetching product options:", error);
       } finally {
-        if (onOptionsLoaded) onOptionsLoaded();
+        if (!cancelled && onOptionsLoaded) onOptionsLoaded(); // ✅ call parent callback here
       }
     };
 
     fetchData();
+    return () => {
+      cancelled = true;
+    };
   }, [productId, productSkuId]);
 
   useEffect(() => {
@@ -115,10 +119,28 @@ const ProductOptions = ({
   }, [selectedSize]);
 
   const sortedSizes = [...availableSizes].sort((a, b) => {
-    const indexA = sizeOrder.indexOf(a.toUpperCase());
-    const indexB = sizeOrder.indexOf(b.toUpperCase());
-    return (indexA === -1 ? Infinity : indexA) - (indexB === -1 ? Infinity : indexB);
-  });
+  const upperA = a.toUpperCase();
+  const upperB = b.toUpperCase();
+ 
+  const indexA = sizeOrder.indexOf(upperA);
+  const indexB = sizeOrder.indexOf(upperB);
+ 
+  const isNumericA = !isNaN(parseFloat(a));
+  const isNumericB = !isNaN(parseFloat(b));
+ 
+  if (isNumericA && isNumericB) {
+    return parseFloat(a) - parseFloat(b);
+  }
+ 
+  if (indexA !== -1 && indexB !== -1) {
+    return indexA - indexB;
+  }
+ 
+  if (indexA !== -1) return -1;
+  if (indexB !== -1) return 1;
+ 
+  return a.localeCompare(b); 
+});
 
   return (
     <>

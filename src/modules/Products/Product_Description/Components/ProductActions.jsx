@@ -1,9 +1,15 @@
 import { useState, useEffect } from "react";
 import { Button, Typography, message } from "antd";
-import { ShoppingCartOutlined, ShoppingOutlined, MinusOutlined, PlusOutlined,} from "@ant-design/icons";
+import {
+  ShoppingCartOutlined,
+  ShoppingOutlined,
+  MinusOutlined,
+  PlusOutlined,
+} from "@ant-design/icons";
 import WishlistButton from "../../../Users/WishlistItems/Components/WishlistButton";
-import { addToCartFlow } from "../../../Cart/cart.api"; 
+import { addToCartFlow } from "../../../Cart/cart.api";
 import { useCart } from "../../../Cart/CartContext";
+import useGA4Tracking from "../../../../../useGA4Tracking.js";
 
 const { Text } = Typography;
 
@@ -11,6 +17,7 @@ const ProductActions = ({ stock, price, userId, productSkuId, product }) => {
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
   const { refreshCartCount } = useCart();
+  const { trackAddToCart } = useGA4Tracking();
 
   useEffect(() => {
     setQuantity(1);
@@ -28,15 +35,19 @@ const ProductActions = ({ stock, price, userId, productSkuId, product }) => {
     }
   };
 
-  const getGuestCart = () =>JSON.parse(localStorage.getItem("guestCart") || "[]");
-  const setGuestCart = (items) =>localStorage.setItem("guestCart", JSON.stringify(items));
+  const getGuestCart = () =>
+    JSON.parse(localStorage.getItem("guestCart") || "[]");
+  const setGuestCart = (items) =>
+    localStorage.setItem("guestCart", JSON.stringify(items));
   const handleAddToCart = async () => {
     try {
       setLoading(true);
 
       if (!userId) {
         let guestCart = getGuestCart();
-        const existing = guestCart.find((item) => item.productSkuId === productSkuId);
+        const existing = guestCart.find(
+          (item) => item.productSkuId === productSkuId
+        );
 
         if (existing) {
           existing.quantity += quantity;
@@ -47,7 +58,7 @@ const ProductActions = ({ stock, price, userId, productSkuId, product }) => {
             productId: product.productId,
             productTitle: product.productTitle,
             productPrice: price,
-            productImage: product.imageUrl || "", 
+            productImage: product.imageUrl || "",
             productSize: product.productSize || "",
             productColor: product.productColor || "",
           });
@@ -55,7 +66,7 @@ const ProductActions = ({ stock, price, userId, productSkuId, product }) => {
 
         setGuestCart(guestCart);
         message.success("Added to cart (guest)!");
-        await refreshCartCount(); 
+        await refreshCartCount();
         return;
       }
 
@@ -67,7 +78,7 @@ const ProductActions = ({ stock, price, userId, productSkuId, product }) => {
         productColor: product.productColor,
       });
       message.success("Added to cart!");
-      await refreshCartCount(); 
+      await refreshCartCount();
     } catch (error) {
       console.error("Add to cart failed:", error);
       message.error("Failed to add to cart");
@@ -77,8 +88,22 @@ const ProductActions = ({ stock, price, userId, productSkuId, product }) => {
   };
 
   return (
-    <div style={{ marginTop: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "32px", flexWrap: "wrap" }}>
+    <div
+      style={{
+        marginTop: "24px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "16px",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "32px",
+          flexWrap: "wrap",
+        }}
+      >
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <Text strong>Quantity:</Text>
           <div
@@ -124,7 +149,16 @@ const ProductActions = ({ stock, price, userId, productSkuId, product }) => {
           style={{ backgroundColor: "#000", borderColor: "#000" }}
           onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#333")}
           onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#000")}
-          onClick={handleAddToCart}
+          onClick={() => {
+            handleAddToCart();
+
+            trackAddToCart({
+              productSkuId: productSkuId,
+              productTitle: product.productTitle || product.productName,
+              productPrice: product.productPrice || 0,
+              productId: product.productId,
+            });
+          }}
         >
           Add to Cart
         </Button>
@@ -132,8 +166,14 @@ const ProductActions = ({ stock, price, userId, productSkuId, product }) => {
         <Button
           type="default"
           icon={<ShoppingOutlined />}
-          style={{ borderColor: "#000", color: "#000", backgroundColor: "#fff" }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f5f5f5")}
+          style={{
+            borderColor: "#000",
+            color: "#000",
+            backgroundColor: "#fff",
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.backgroundColor = "#f5f5f5")
+          }
           onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#fff")}
         >
           Buy Now
