@@ -36,3 +36,10 @@
 .spacing{
     margin-Bottom: 1rem;
 }
+.btn-grey {
+  width: 180px; 
+  display: flex;
+  align-items: center;
+  justify-content: center; 
+  gap: 8px; 
+}

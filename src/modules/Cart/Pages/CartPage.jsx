@@ -23,7 +23,9 @@ import "../../Cart/Cart.css";
 import { useCart } from "../CartContext";
 const { Title, Text } = Typography;
 
-import { setBuyNow } from "../../Orders/redux/orderSlice"; //  added
+
+// import { setBuyNow } from "../../Orders/order.slice"; //  added
+
 import { useDispatch } from "react-redux";
 import useGA4Tracking from "../../../../useGA4Tracking";
 
@@ -185,14 +187,15 @@ const CartPage = () => {
       return;
     }
     const gaItems = items.map((item) => ({
-      item_id: item.productSkuId,
+      item_id: item.productId,
       item_name: item.productTitle || "Unnamed Product",
       price: item.productPrice,
       quantity: item.quantity,
     }));
 
     trackBeginCheckout({ items: gaItems, total: subtotal }); // Fire GA4 event here
-    dispatch(setBuyNow(false));
+    // dispatch(setBuyNow(false));
+
     navigate("/orders/summary");
   };
 

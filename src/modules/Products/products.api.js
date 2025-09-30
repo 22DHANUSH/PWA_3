@@ -1,7 +1,7 @@
 import product_api from "../../app/product.axios";
 import user_api from "../../app/users.axios";
  
-async function getPrimaryImageBySku(skuId) {
+export async function getPrimaryImageBySku(skuId) {
   if (!skuId) {
     console.warn("SKU ID is missing");
     return null;

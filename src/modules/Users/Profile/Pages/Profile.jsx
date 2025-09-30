@@ -352,18 +352,9 @@ export default function Profile() {
             <Button
               className="btn-grey"
               icon={<ShoppingCartOutlined />}
-              onClick={() => navigate("/orders")}
+              onClick={() => navigate("/my-orders")}
             >
               My Orders
-            </Button>
-          </Col>
-          <Col>
-            <Button
-              className="btn-grey"
-              icon={<CarOutlined />}
-              onClick={() => navigate("/track-order")}
-            >
-              Track Order
             </Button>
           </Col>
           <Col>

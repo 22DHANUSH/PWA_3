@@ -101,16 +101,15 @@ function ProductsPage() {
     setLoadingOptions(false);
   };
 
-
-const handleBuyNow = (product) => {
-  setLoadingOptions(true);
-  setSelectedColor(null);
-  setSelectedSize(null);
-  setQuantity(1);
-  setSelectedSku(null);
-  setSelectedProduct(product);
-  setIsModalVisible(true); 
-};
+  const handleBuyNow = (product) => {
+    setLoadingOptions(true);
+    setSelectedColor(null);
+    setSelectedSize(null);
+    setQuantity(1);
+    setSelectedSku(null);
+    setSelectedProduct(product);
+    setIsModalVisible(true);
+  };
 
   // Load wishlist state for visible products
   useEffect(() => {
@@ -167,7 +166,6 @@ const handleBuyNow = (product) => {
     }
   };
 
- 
   const handleAddToCart = async (e, productSkuId, quantity = 1) => {
     e.stopPropagation();
     if (!productSkuId) {
@@ -178,7 +176,9 @@ const handleBuyNow = (product) => {
     if (!userId) {
       addToGuestCart({ productSkuId }, quantity);
       message.success("Added to cart");
-      await refreshCartCount(); 
+
+      await refreshCartCount();
+
       return;
     }
 
@@ -202,7 +202,7 @@ const handleBuyNow = (product) => {
         if (err.response?.status === 404) {
           console.log("Item not found in cart, will add new.");
         } else {
-          throw err; 
+          throw err;
         }
       }
 
@@ -217,8 +217,7 @@ const handleBuyNow = (product) => {
         await addCartItem(cart.cartId, productSkuId, quantity);
         message.success("Added to cart");
       }
-
-      await refreshCartCount(); 
+      await refreshCartCount();
     } catch (err) {
       console.error("Error adding to cart:", err);
       message.error("Failed to add to cart");
@@ -293,7 +292,7 @@ const handleBuyNow = (product) => {
                               trackAddToWishlist({
                                 productTitle: p.productName || p.productTitle,
                                 productPrice: Number(p.productPrice) || 0,
-                                productId: p.productId || p.productSkuID,
+                                productId: p.productId,
                               });
                             }}
                             style={{
@@ -336,7 +335,6 @@ const handleBuyNow = (product) => {
                               onClick={() => {
                                 handleBuyNow(p);
                                 trackAddToCart({
-                                  productSkuId: p.productSkuID,
                                   productTitle: p.productName || p.productTitle,
                                   productPrice: Number(p.productPrice) || 0,
                                   productId: p.productId,
@@ -348,81 +346,105 @@ const handleBuyNow = (product) => {
                             <Button type="default" size="middle">
                               Buy Now
                             </Button>
-<Modal
-  className="no-mask-background"
-  open={isModalVisible && !!selectedProduct} 
-  title={
-    <div style={{ fontSize: 20, fontWeight: "bold", textAlign: "center" }}>
-      {selectedProduct?.name || selectedProduct?.productName || "Product"}
-    </div>
-  }
-  maskStyle={{ backgroundColor: "transparent" }}
-  width={600}
-  bodyStyle={{
-    minHeight: 400,
-    maxHeight: 400,
-    overflowY: "auto",
-    padding: "24px",
-  }}
-  onCancel={() => {
-    setIsModalVisible(false);
-    setSelectedProduct(null);
-    setSelectedSku(null);
-    setSelectedColor(null);
-    setSelectedSize(null);
-    setQuantity(1);
-  }}
-  footer={[
-    <Button key="cancel" onClick={() => setIsModalVisible(false)}>
-      Cancel
-    </Button>,
-    <Button
-      key="addtocart"
-      type="primary"
-      onClick={(e) => {
-        handleAddToCart(e, selectedSku?.productSkuId, quantity);
-        setIsModalVisible(false);
-      }}
-      disabled={!selectedSku || loadingOptions}
-    >
-      Add to Cart
-    </Button>,
-  ]}
->
-  <div style={{ position: "relative", width: "100%", height: "100%" }}>
-    {loadingOptions && (
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          background: "rgba(255,255,255,0.8)",
-          zIndex: 10,
-        }}
-      >
-        <Spin tip="Loading product options..." />
-      </div>
-    )}
 
-    {selectedProduct && (
-      <ProductOptions
-        productId={selectedProduct.productId}
-        productSkuId={selectedProduct.productSkuID}
-        selectedColor={selectedColor}
-        setSelectedColor={setSelectedColor}
-        selectedSize={selectedSize}
-        setSelectedSize={setSelectedSize}
-        stock={selectedProduct.stock}
-        quantity={quantity}
-        setQuantity={setQuantity}
-        setSelectedSku={setSelectedSku}
-        onOptionsLoaded={() => setLoadingOptions(false)}
-      />
-    )}
-  </div>
-</Modal>
+                            <Modal
+                              className="no-mask-background"
+                              open={isModalVisible && !!selectedProduct}
+                              title={
+                                <div
+                                  style={{
+                                    fontSize: 20,
+                                    fontWeight: "bold",
+                                    textAlign: "center",
+                                  }}
+                                >
+                                  {selectedProduct?.name ||
+                                    selectedProduct?.productName ||
+                                    "Product"}
+                                </div>
+                              }
+                              maskStyle={{ backgroundColor: "transparent" }}
+                              width={600}
+                              bodyStyle={{
+                                minHeight: 400,
+                                maxHeight: 400,
+                                overflowY: "auto",
+                                padding: "24px",
+                              }}
+                              onCancel={() => {
+                                setIsModalVisible(false);
+                                setSelectedProduct(null);
+                                setSelectedSku(null);
+                                setSelectedColor(null);
+                                setSelectedSize(null);
+                                setQuantity(1);
+                              }}
+                              footer={[
+                                <Button
+                                  key="cancel"
+                                  onClick={() => setIsModalVisible(false)}
+                                >
+                                  Cancel
+                                </Button>,
+                                <Button
+                                  key="addtocart"
+                                  type="primary"
+                                  onClick={(e) => {
+                                    handleAddToCart(
+                                      e,
+                                      selectedSku?.productSkuId,
+                                      quantity
+                                    );
+                                    setIsModalVisible(false);
+                                  }}
+                                  disabled={!selectedSku || loadingOptions}
+                                >
+                                  Add to Cart
+                                </Button>,
+                              ]}
+                            >
+                              <div
+                                style={{
+                                  position: "relative",
+                                  width: "100%",
+                                  height: "100%",
+                                }}
+                              >
+                                {loadingOptions && (
+                                  <div
+                                    style={{
+                                      position: "absolute",
+                                      inset: 0,
+                                      display: "flex",
+                                      justifyContent: "center",
+                                      alignItems: "center",
+                                      background: "rgba(255,255,255,0.8)",
+                                      zIndex: 10,
+                                    }}
+                                  >
+                                    <Spin tip="Loading product options..." />
+                                  </div>
+                                )}
+
+                                {selectedProduct && (
+                                  <ProductOptions
+                                    productId={selectedProduct.productId}
+                                    productSkuId={selectedProduct.productSkuID}
+                                    selectedColor={selectedColor}
+                                    setSelectedColor={setSelectedColor}
+                                    selectedSize={selectedSize}
+                                    setSelectedSize={setSelectedSize}
+                                    stock={selectedProduct.stock}
+                                    quantity={quantity}
+                                    setQuantity={setQuantity}
+                                    setSelectedSku={setSelectedSku}
+                                    onOptionsLoaded={() =>
+                                      setLoadingOptions(false)
+                                    }
+                                  />
+                                )}
+                              </div>
+                            </Modal>
                           </div>
                         </div>
                       }

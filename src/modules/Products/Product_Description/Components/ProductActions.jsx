@@ -153,7 +153,6 @@ const ProductActions = ({ stock, price, userId, productSkuId, product }) => {
             handleAddToCart();
 
             trackAddToCart({
-              productSkuId: productSkuId,
               productTitle: product.productTitle || product.productName,
               productPrice: product.productPrice || 0,
               productId: product.productId,

@@ -1,45 +1,59 @@
 import { Routes, Route } from "react-router-dom";
-import Landing from './modules/Products/Product_Landing/Pages/Landing';
-import ProductsPage from './modules/Products/Product_Catalog/Pages/ProductsPage';
+
+// Products
+import Landing from "./modules/Products/Product_Landing/Pages/Landing";
+import ProductsPage from "./modules/Products/Product_Catalog/Pages/ProductsPage";
+import SearchAndFilterPage from "./modules/Products/Product_Catalog/Pages/SearchAndFilterPage";
+import ProductDetailPageWrapper from "./modules/Products/Product_Description/ProductDetailPageWrapper";
+
+// Users
 import Profile from "./modules/Users/Profile/Pages/Profile";
 import Login from "./modules/Users/Auth/Pages/Login";
 import Signup from "./modules/Users/Auth/Pages/Signup";
-import Addresses from "./modules/Users/Addresses/Pages/Addresses";
-import SearchAndFilterPage from "./modules/Products/Product_Catalog/Pages/SearchAndFilterPage";
-import ProductDetailPageWrapper from "./modules/Products/Product_Description/ProductDetailPageWrapper";
-import WishlistPage from "./modules/Users/WishlistItems/Pages/WishlistItems";
-import CartPage from "./modules/Cart/Pages/CartPage";
 import ForgotPassword from "./modules/Users/Auth/Pages/ForgotPassword";
+import Addresses from "./modules/Users/Addresses/Pages/Addresses";
+import WishlistPage from "./modules/Users/WishlistItems/Pages/WishlistItems";
+
+// Cart & Orders
+import CartPage from "./modules/Cart/Pages/CartPage";
+import OrderHistory from "./modules/Orders/OrderHistory/Pages/OrderHistory";
+import OrderTracking from "./modules/Orders/OrderTracking/Pages/OrderTracking";
 import OrderReview from "./modules/Orders/OrderSummary/Pages/OrderReview";
-import MyOrder from "./modules/Orders/OrderHistory/Pages/MyOrder";
 import PaymentPage from "./modules/Payment/PaymentPage";
 
 const RouteItems = () => {
   return (
     <Routes>
+      {/* Landing & Products */}
       <Route path="/" element={<Landing />} />
       <Route path="/products" element={<SearchAndFilterPage />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/addresses" element={<Addresses />} />
-      {/* <Route path="/productdetails" element={<ProductDetailsPage />} /> */}
       <Route
         path="/productdetails/:productId/:productSkuId"
         element={<ProductDetailPageWrapper />}
       />
 
-      <Route path="/wishlist" element={<WishlistPage/>}/>
-      <Route path="/cart" element={<CartPage/>}/>
-      <Route path="/checkout" element={<CartPage/>}/>
+      {/* User Auth & Profile */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/profile" element={<Profile />} />
+      <Route path="/addresses" element={<Addresses />} />
 
-      <Route path="/forgotpassword" element={<ForgotPassword />} />
+      {/* Wishlist & Cart */}
+      <Route path="/wishlist" element={<WishlistPage />} />
+      <Route path="/cart" element={<CartPage />} />
+      <Route path="/checkout" element={<CartPage />} />
 
-      <Route path="/pastorder" element={<MyOrder />} />
+      {/* Orders */}
+      <Route path="/my-orders" element={<OrderHistory />} />
+      <Route path="/order-tracking/:orderId" element={<OrderTracking />} />
       <Route path="/orders/summary" element={<OrderReview />} />
-      <Route path="/payment" element={<PaymentPage/>}/>
 
+      {/* Payment */}
+      <Route path="/payment" element={<PaymentPage />} />
+
+      {/* Optional: 404 */}
+      <Route path="*" element={<h1>404 - Page Not Found</h1>} />
     </Routes>
   );
 };

@@ -6,7 +6,9 @@ import {
 } from "../Payment/payment.api";
 import { useSelector } from "react-redux";
 import { clearCartByUser } from "../Cart/cart.api.js";
+
 const checkout_url =import.meta.env.VITE_RAZOR_CHECKOUT_URL;
+
 export async function handleRazorpayPayment({
   amount,
   userId,

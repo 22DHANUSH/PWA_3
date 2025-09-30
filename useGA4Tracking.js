@@ -23,7 +23,7 @@ const useGA4Tracking = () => {
     const price = parsePrice(product.productPrice || product.price);
     const name =
       product.productTitle || product.productName || "Unnamed Product";
-    const id = product.productSkuId || product.productSkuID || product.id;
+    const id = product.productId || 0;
 
     sendEvent("view_item", {
       currency: "USD",
@@ -47,7 +47,8 @@ const useGA4Tracking = () => {
         {
           item_name:
             product.productTitle || product.productName || "Unnamed Product",
-          item_id: product.productSkuId || product.productSkuID || product.id,
+
+          item_id: product.productId || 0,
           price,
           quantity: product.quantity || 1,
         },
@@ -59,8 +60,9 @@ const useGA4Tracking = () => {
     if (!items || items.length === 0) return;
 
     const gaItems = items.map((item) => ({
-      item_id: item.productSkuId || item.productSkuID || item.item_id,
-      item_name: item.productTitle || item.productName || "Unnamed Product",
+
+      item_id: item.item_id || 0,
+      item_name: item.item_name || item.productName || "Unnamed Product",
       price: parsePrice(item.productPrice || item.price),
       quantity: item.quantity || 1,
     }));
@@ -76,18 +78,22 @@ const useGA4Tracking = () => {
     if (!items || items.length === 0) return;
 
     const gaItems = items.map((item) => ({
-      item_id: item.productSkuId || item.id,
-      item_name: item.productTitle || item.name || "Unnamed Product",
-      price: parsePrice(item.productPrice || item.price),
-      quantity: item.quantity || 1,
+      item_id: item.item_id || 0,
+      item_name: item.item_name || "Unnamed Product",
+      price: Number(parsePrice(item.price)) || 0,
+      quantity: Number(item.quantity) || 1,
     }));
+
+    const fallbackValue = gaItems.reduce(
+      (sum, i) => sum + i.price * i.quantity,
+      0
+    );
+    const totalValue = parsePrice(value);
 
     sendEvent("purchase", {
       transaction_id: transaction_id || `txn_${Date.now()}`,
       currency: "USD",
-      value:
-        parsePrice(value) ||
-        gaItems.reduce((sum, i) => sum + i.price * i.quantity, 0),
+      value: totalValue || fallbackValue,
       items: gaItems,
     });
   };
@@ -103,7 +109,8 @@ const useGA4Tracking = () => {
         {
           item_name:
             product.productTitle || product.productName || "Unnamed Product",
-          item_id: product.productSkuId || product.id,
+
+          item_id: product.productId || 0,
           price,
         },
       ],

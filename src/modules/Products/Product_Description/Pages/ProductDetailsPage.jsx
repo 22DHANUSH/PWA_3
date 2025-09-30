@@ -31,7 +31,6 @@ const ProductDetailPage = ({ productId, productSkuId }) => {
     if (product == null) return;
 
     trackViewItem({
-      productSkuId: selectedSku.productSkuId,
       productTitle: product.productName || p.productTitle,
       productPrice: Number(selectedSku.productPrice) || 0,
       productId: product.productId,

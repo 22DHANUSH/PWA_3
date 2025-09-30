@@ -24,9 +24,8 @@ export default function PaymentPage() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [address, setAddress] = useState({});
   const emailId = useSelector((state) => state.auth.email);
-  const navigate= useNavigate();
-
   const userId = useSelector((state) => state.auth.userId);
+  const navigate = useNavigate();
 
   const { orderId, totalAmount } = useSelector((state) => state.order);
   useEffect(() => {
