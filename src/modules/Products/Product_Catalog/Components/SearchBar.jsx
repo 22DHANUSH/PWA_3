@@ -1,20 +1,24 @@
-import { AutoComplete, Input, message } from "antd";
+import { AutoComplete, Input } from "antd";
 import { useState, useEffect } from "react";
 import { mapToRequestPayload } from "../../MapToRequestPayload";
 import { useProducts } from "../../ProductContext";
-import { searchProducts } from '../../products.api';
+import { searchProducts } from "../../products.api";
 
 function SearchBar() {
   const [query, setQuery] = useState("");
   const [options, setOptions] = useState([]);
-  const { filters, setFilters, fetchProducts } = useProducts();
+  const { filters, setFilters } = useProducts();
 
   useEffect(() => {
     const timeout = setTimeout(() => {
       const fetchSuggestions = async () => {
         if (query.length > 1) {
           try {
-            const payload = mapToRequestPayload({ ...filters, searchTerm: query });
+            const payload = mapToRequestPayload({
+              ...filters,
+              searchTerm: query,
+            });
+
             const res = await searchProducts(payload);
             const formatted = (res || []).map((item) => ({
               value: item.productName,
@@ -41,22 +45,19 @@ function SearchBar() {
     }, 300);
 
     return () => clearTimeout(timeout);
-  }, [query, filters]);
+  }, [query]);
 
   const handleSearch = (value) => {
     const matchedOption = options.find(
       (opt) => opt.value.toLowerCase() === value.toLowerCase()
     );
 
-    const updatedFilters = {
+    const confirmedSearchTerm = matchedOption ? matchedOption.value : value;
+
+    setFilters({
       ...filters,
-      searchTerm: matchedOption ? matchedOption.value : value,
-    };
-
-    const cleanedFilters = mapToRequestPayload(updatedFilters);
-
-    setFilters(updatedFilters);
-    fetchProducts(cleanedFilters);
+      searchTerm: confirmedSearchTerm,
+    });
   };
 
   return (
@@ -64,14 +65,13 @@ function SearchBar() {
       <AutoComplete
         options={options}
         style={{ width: "100%" }}
-        onSelect={handleSearch}
-        onSearch={(text) => setQuery(text)}
+        onSearch={(text) => setQuery(text)} // ✅ Only updates local query
         placeholder="Search for products"
         filterOption={false}
       >
         <Input.Search
           enterButton
-          onSearch={handleSearch}
+          onSearch={handleSearch} // ✅ Only triggers on Enter or button click
           allowClear
         />
       </AutoComplete>

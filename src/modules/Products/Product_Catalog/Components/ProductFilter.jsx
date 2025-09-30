@@ -6,7 +6,7 @@ import { getBrands, getCategories } from "../../products.api";
 const { Panel } = Collapse;
 
 function ProductFilter() {
-  const { filters, setFilters, fetchProducts } = useProducts();
+  const { filters, setFilters } = useProducts();
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
 
@@ -37,28 +37,7 @@ function ProductFilter() {
       maxPrice: 500,
       searchTerm: "",
     };
- 
     setFilters(clearedFilters);
-    fetchProducts(cleanFilters(clearedFilters));
-  };
-
-  const cleanFilters = (filters) => {
-    const cleaned = {};
-    Object.entries(filters).forEach(([key, value]) => {
-      if (Array.isArray(value) && value.length > 0) {
-        cleaned[key] = value;
-      } else if (typeof value === "number") {
-        if (
-          (key === "minPrice" && value > 0) ||
-          (key === "maxPrice" && value < 500)
-        ) {
-          cleaned[key] = value;
-        }
-      } else if (typeof value === "string" && value.trim() !== "") {
-        cleaned[key] = value;
-      }
-    });
-    return cleaned;
   };
 
   const updateFilter = (key, value) => {
@@ -68,18 +47,12 @@ function ProductFilter() {
       : [...current, value];
 
     const newFilters = { ...filters, [key]: updated };
-    const cleanedFilters = cleanFilters(newFilters);
-
     setFilters(newFilters);
-    fetchProducts(cleanedFilters);
   };
 
   const handlePriceChange = ([min, max]) => {
     const newFilters = { ...filters, minPrice: min, maxPrice: max };
-    const cleanedFilters = cleanFilters(newFilters);
-
     setFilters(newFilters);
-    fetchProducts(cleanedFilters);
   };
 
   const sizeOptions = ["XS", "S", "M", "L", "XL", "XXL"];
@@ -156,51 +129,58 @@ function ProductFilter() {
   };
 
   return (
-
-        <>
-     <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 12 }}>
-        <a onClick={resetFilters} style={{ color: "#1890ff", cursor: "pointer" }}>
+    <>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-start",
+          marginBottom: 12,
+        }}
+      >
+        <a
+          onClick={resetFilters}
+          style={{ color: "#1890ff", cursor: "pointer" }}
+        >
           Reset All Filters
         </a>
       </div>
 
-    <Collapse defaultActiveKey={["categoryIds", "brandIds", "price"]}>
-      <Panel header="Category" key="categoryIds">
-        {renderCheckboxGroup(
-          "categoryIds",
-          categories,
-          "categoryId",
-          "categoryName"
-        )}
-      </Panel>
-      <Panel header="Color" key="colors">
-        {renderCheckboxGroup("colors", colorOptions, "name", "name")}
-      </Panel>
-      <Panel header="Brand" key="brandIds">
-        {renderCheckboxGroup("brandIds", brands, "brandId", "brandName")}
-      </Panel>
-      <Panel header="Size" key="sizes">
-        {renderCheckboxGroup("sizes", sizeOptions)}
-      </Panel>
-      <Panel header="Gender" key="genders">
-        {renderCheckboxGroup("genders", genderOptions)}
-      </Panel>
-      <Panel header="Price" key="price">
-        <Slider
-          range
-          min={0}
-          max={500}
-          step={10}
-          value={[filters.minPrice ?? 0, filters.maxPrice ?? 500]}
-          onChange={handlePriceChange}
-        />
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span>${filters.minPrice ?? 0}</span>
-          <span>${filters.maxPrice ?? 500}</span>
-        </div>
-      </Panel>
-    </Collapse>
-    
+      <Collapse defaultActiveKey={["categoryIds", "brandIds", "price"]}>
+        <Panel header="Category" key="categoryIds">
+          {renderCheckboxGroup(
+            "categoryIds",
+            categories,
+            "categoryId",
+            "categoryName"
+          )}
+        </Panel>
+        <Panel header="Color" key="colors">
+          {renderCheckboxGroup("colors", colorOptions, "name", "name")}
+        </Panel>
+        <Panel header="Brand" key="brandIds">
+          {renderCheckboxGroup("brandIds", brands, "brandId", "brandName")}
+        </Panel>
+        <Panel header="Size" key="sizes">
+          {renderCheckboxGroup("sizes", sizeOptions)}
+        </Panel>
+        <Panel header="Gender" key="genders">
+          {renderCheckboxGroup("genders", genderOptions)}
+        </Panel>
+        <Panel header="Price" key="price">
+          <Slider
+            range
+            min={0}
+            max={500}
+            step={10}
+            value={[filters.minPrice ?? 0, filters.maxPrice ?? 500]}
+            onChange={handlePriceChange}
+          />
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span>${filters.minPrice ?? 0}</span>
+            <span>${filters.maxPrice ?? 500}</span>
+          </div>
+        </Panel>
+      </Collapse>
     </>
   );
 }
