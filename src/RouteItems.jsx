@@ -21,6 +21,11 @@ import OrderTracking from "./modules/Orders/OrderTracking/Pages/OrderTracking";
 import OrderReview from "./modules/Orders/OrderSummary/Pages/OrderReview";
 import PaymentPage from "./modules/Payment/PaymentPage";
 
+//About and Contact Page
+import AboutPage from "./pages/About/About";
+import ContactPage from "./pages/Contact/ContactPage";
+
+
 const RouteItems = () => {
   return (
     <Routes>
@@ -51,6 +56,10 @@ const RouteItems = () => {
 
       {/* Payment */}
       <Route path="/payment" element={<PaymentPage />} />
+
+      {/* Static Pages */}
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/contact" element={<ContactPage />} />
 
       {/* Optional: 404 */}
       <Route path="*" element={<h1>404 - Page Not Found</h1>} />

@@ -1,30 +1,63 @@
 export default function SiteFooter() {
   return (
     <footer className="section">
-      <div className="container" style={{ borderTop: '1px solid rgba(0,0,0,.06)', paddingTop: 32 }}>
-        <div className="grid-3">
-          <div className="v-stack" style={{ gap: 8 }}>
-            <div className="subtle">INFO</div>
-            <a href="#">PRICING</a>
-            <a href="#">ABOUT</a>
-            <a href="#">CONTACTS</a>
-            <div className="subtle" style={{ marginTop: 14 }}>LANGUAGES</div>
-            <a href="#">ENG</a><a href="#">ESP</a><a href="#">SVE</a>
-          </div>
-          <div className="v-stack" style={{ gap: 7 }}>
-            <div className="subtle">TECHNOLOGIES</div>
-            <div className="h-stack" style={{ gap: 14, alignItems: 'center' }}>
-              <div style={{ width: 22, height: 22, transform: 'rotate(45deg)', border: '2px solid #111' }} aria-hidden />
-              <div style={{ fontFamily: 'Space Grotesk', fontSize: 46, lineHeight: 1 }}>COLUMBIA<br/>SPORTSWEAR</div>
+      <div
+        className="container"
+        style={{
+          borderTop: '1px solid rgba(0,0,0,.06)',
+          paddingTop: 32,
+          display: 'flex',
+          justifyContent: 'center',
+        }}
+      >
+        <div
+          className="grid-3"
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            width: '100%',
+            maxWidth: 1000,
+          }}
+        >
+
+          <div className="h-stack" style={{ display: 'flex', gap: 48 }}>
+            <div className="v-stack" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="subtle">INFO</div>
+
+              <a href="/about">ABOUT</a>
+              <a href="/contact">CONTACT US</a>
+
             </div>
-            <div className="subtle">Near-field communication</div>
+
           </div>
-          <div className="v-stack subtle" style={{ gap: 8 }}>
+
+
+          <div className="v-stack" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <img
+              src="/images/Columbia-Logo2.png"
+              alt="Columbia Sportswear Logo"
+              style={{ height: 150 }}
+            />
+          </div>
+
+
+          <div
+            className="v-stack subtle"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+              textAlign: 'right',
+            }}
+          >
             <div>© {new Date().getFullYear()} Columbia Sportswear</div>
             <div>All rights reserved.</div>
           </div>
         </div>
       </div>
     </footer>
-  )
+  );
 }
+
+

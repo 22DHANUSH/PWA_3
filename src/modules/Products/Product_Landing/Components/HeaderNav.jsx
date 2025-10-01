@@ -1,18 +1,26 @@
-import { HeartOutlined, ShoppingCartOutlined, UserOutlined,} from "@ant-design/icons";
-import { Input, Badge } from "antd"; 
+import {
+  HeartOutlined,
+  ShoppingCartOutlined,
+  UserOutlined,
+  MenuOutlined,
+  CloseOutlined,
+} from "@ant-design/icons";
+import { Input, Badge } from "antd";
 import { Link, useLocation } from "react-router-dom";
 import Columbialogo from "/images/columbialogo.png";
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
-import { useCart } from "../../../Cart/CartContext"; 
+import { useCart } from "../../../Cart/CartContext";
+import "../HeaderNav.css";
 
 export default function HeaderNav() {
   const location = useLocation();
   const email = useSelector((state) => state.auth.email);
   const [emailInitial, setEmailInitial] = useState("");
-  const { cartCount } = useCart(); 
+  const { cartCount } = useCart();
   const isLoginPage = location.pathname === "/login";
   const hideSearch = location.pathname.startsWith("/products") || isLoginPage;
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     if (email && email.length > 0) {
@@ -26,31 +34,25 @@ export default function HeaderNav() {
     <header className="sticky-header">
       <div className="container nav-bar">
         <div className="nav-left">
-          <nav
-            className="nav-links"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 16,
-              lineHeight: "40px", // match logo height
-            }}
+          <Link to="/" aria-label="Go Home" className="nav-logo">
+            <img
+              src={Columbialogo}
+              alt="Columbia Sportswear"
+              className="logo-img"
+            />
+          </Link>
+
+          <button
+            className="nav-toggle"
+            onClick={() => setMenuOpen((prev) => !prev)}
+            aria-label="Toggle navigation"
           >
-            <Link to="/" aria-label="Go Home" className="nav-logo">
-              <img
-                src={Columbialogo}
-                alt="Columbia Sportswear"
-                style={{
-                  height: 80, // reduce height for better alignment
-                  objectFit: "contain",
-                  cursor: "pointer",
-                  verticalAlign: "middle",
-                  paddingBottom: "5px",
-                }}
-              />
-            </Link>
-            <Link to="/">Home</Link>
-            <Link to="/products">Collections</Link>
-            <Link to="/products">New</Link>
+            {menuOpen ? <CloseOutlined /> : <MenuOutlined />}
+          </button>
+
+          <nav className={`nav-links ${menuOpen ? "active" : ""}`}>
+            <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
+            <Link to="/products" onClick={() => setMenuOpen(false)}>Collections</Link>
           </nav>
         </div>
 

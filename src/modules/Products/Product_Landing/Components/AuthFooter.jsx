@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import logo from "/images/columbialogo.png";
+import logo from "/images/Columbia-Logo2.png";
 import "../../../../modules/Users/Auth/Auth.css";
  
 export default function AuthFooter() {

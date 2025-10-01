@@ -1,12 +1,12 @@
 import product_api from "../../app/product.axios";
 import user_api from "../../app/users.axios";
- 
+
 export async function getPrimaryImageBySku(skuId) {
   if (!skuId) {
     console.warn("SKU ID is missing");
     return null;
   }
- 
+
   try {
     const response = await user_api.get(`/blob/GenerateSasToken/${skuId}/1`);
     const images = Array.isArray(response.data) ? response.data : [];
@@ -17,7 +17,7 @@ export async function getPrimaryImageBySku(skuId) {
     return null;
   }
 }
- 
+
 async function enrichWithImage(products) {
   return await Promise.all(
     products.map(async (product) => {
@@ -25,7 +25,7 @@ async function enrichWithImage(products) {
         console.warn("Missing SKU ID in product:", product);
         return { ...product, imageUrl: product.imageUrl || "" };
       }
- 
+
       const imageUrl = await getPrimaryImageBySku(product.productSkuID);
       return {
         ...product,
@@ -34,10 +34,11 @@ async function enrichWithImage(products) {
     })
   );
 }
- 
+
 function mapProduct(product) {
   return {
     name: product.productName,
+    productId: product.productId,
     price: product.productPrice,
     category: product.categoryName,
     productSkuID: product.productSkuID,
@@ -45,7 +46,7 @@ function mapProduct(product) {
     meta: `${product.productColor} • ${product.productSize}`,
   };
 }
- 
+
 export async function getCollections(categoryIds) {
   try {
     const response = await product_api.post("/products/search", { categoryIds });
@@ -57,31 +58,33 @@ export async function getCollections(categoryIds) {
     return [];
   }
 }
- 
+
+
 export async function getHeroImages() {
   try {
-    const { data } = await product_api.get("/product_images?pagenumber=1&pagesize=2000");
- 
+    const { data } = await product_api.get("/products/date/desc?pageNumber=1&pageSize=2");
+
     if (!Array.isArray(data) || data.length === 0) {
       console.warn("Unexpected or empty hero image response:", data);
       return [];
     }
-    // Select only the first and last items
+
     const selectedItems = [data[0], data[data.length - 1]].filter(Boolean);
- 
+
     const enriched = await Promise.all(
       selectedItems.map(async (item) => {
+        const productId = item.productId
         const skuId = item.productSkuId;
         if (!skuId) {
           console.warn("Missing SKU ID in hero image item:", item);
           return { ...item, imageUrl: item.imageUrl || "" };
         }
- 
+
         try {
           const response = await user_api.get(`/blob/GenerateSasToken/${skuId}/1`);
           const images = Array.isArray(response.data) ? response.data : [];
           const primaryImage = images.find((img) => img.isPrimary === true);
- 
+
           return {
             ...item,
             imageUrl: primaryImage?.imageUrl,
@@ -95,7 +98,7 @@ export async function getHeroImages() {
         }
       })
     );
- 
+
     return enriched.filter(Boolean);
   } catch (error) {
     console.error("Error fetching hero images:", error.message);
@@ -108,21 +111,22 @@ export async function getMensCollection() {
       categoryIds: [1],
     });
     const products = response.data || [];
- 
+
     const mapped = products.map(product => ({
       productName: product.productName,
+      productId: product.productId,
       productSkuID: product.productSkuID,
       imageUrl: product.imageUrl,
       price: product.productPrice,
     }));
- 
+
     return await enrichWithImage(mapped);
   } catch (error) {
     console.error("Error fetching men's collection:", error.message);
     return [];
   }
 }
- 
+
 export async function getNewThisWeek() {
   try {
     const { data } = await product_api.get("/new_products");
@@ -139,11 +143,11 @@ export async function getNewThisWeek() {
     return [];
   }
 }
- 
+
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
- 
+
 export async function getProductList({
   page = 1,
   pageSize = 9,
@@ -156,78 +160,78 @@ export async function getProductList({
   tags = [],
 } = {}) {
   await delay(120);
- 
- 
+
+
   const all = buildCatalog().map(p => ({
     ...p,
     productSkuID: p.productSkuID ?? p.skuId ?? '',
   }));
- 
+
   const stats = {
     available: all.filter(p => p.inStock).length,
     outOfStock: all.filter(p => !p.inStock).length,
   };
- 
+
   let filtered = [...all];
- 
-  // Category filter
+
+
   if (category !== 'NEW') {
     filtered = filtered.filter(p => p.category === category);
   } else {
     filtered = filtered.filter(p => p.isNew);
   }
- 
-  // Search query filter
+
+
   if (query) {
     const q = query.trim().toLowerCase();
     filtered = filtered.filter(
       p => p.name.toLowerCase().includes(q) || p.meta.toLowerCase().includes(q)
     );
   }
- 
-  // Size filter
+
+
   if (sizes.length) {
     filtered = filtered.filter(p => sizes.some(s => p.sizes.includes(s)));
   }
- 
-  // Availability filter
+
+
   if (availFilter === 'in') filtered = filtered.filter(p => p.inStock);
   if (availFilter === 'out') filtered = filtered.filter(p => !p.inStock);
- 
-  // Price filter
+
+
   filtered = filtered.filter(p => p.price >= price[0] && p.price <= price[1]);
- 
-  // Rating filter
+
+
   if (minRating > 0) {
     filtered = filtered.filter(p => p.rating >= minRating);
   }
- 
-  // Tags filter
+
+
   if (tags.length) {
     filtered = filtered.filter(p => tags.every(t => p.tags.includes(t)));
   }
- 
-  // Pagination
+
+
   const total = filtered.length;
   const start = (page - 1) * pageSize;
   const pageItems = filtered.slice(start, start + pageSize);
- 
-  // Enrich with image using SKU ID
+
+
   const enrichedItems = await enrichWithImage(pageItems);
- 
+
   return { items: enrichedItems, total, stats };
 }
- 
+
 export async function getColorsByProductId(productId) {
   const response = await product_api.get(`/product_skus/ColorsById/${productId}`);
   return response.data;
 }
- 
+
 export async function getSizesByProductId(productId) {
   const response = await product_api.get(`/product_skus/SizesById/${productId}`);
   return response.data;
 }
- 
+
 export async function getReviewsByProductId(productId) {
   try {
     const response = await product_api.get(`/product_reviews/ById${productId}`);
@@ -240,18 +244,18 @@ export async function getReviewsByProductId(productId) {
     throw err;
   }
 }
- 
+
 export async function getProductById(productId) {
   const response = await product_api.get(`/products/${productId}`);
   return response.data;
 }
- 
+
 export async function getSkusByProductId(productId) {
   const response = await product_api.get(`/product_skus/ById/${productId}`);
   return response.data;
 }
- 
- 
+
+
 export async function getImagesBySku(skuId) {
   try {
     const response = await user_api.get(`/blob/GenerateSasToken/${skuId}/1`);
@@ -261,7 +265,7 @@ export async function getImagesBySku(skuId) {
     return [];
   }
 }
- 
+
 
 
 export async function editReview({ reviewId, reviewText, rating, productSkuId, userId }) {
@@ -273,19 +277,19 @@ export async function editReview({ reviewId, reviewText, rating, productSkuId, u
     userId
   });
 }
- 
+
 export async function deleteReview(reviewId) {
-  await product_api.delete(`/product_reviews/${reviewId}`); 
+  await product_api.delete(`/product_reviews/${reviewId}`);
 }
- 
- 
+
+
 export async function addReview({ reviewText, rating, productSkuId, userId }) {
   const newReview = { reviewText, rating, productSkuId, userId };
   const response = await product_api.post("/product_reviews", newReview);
   return response.data;
 }
- 
- 
+
+
 export async function getUserNameById(userId) {
   try {
     const res = await user_api.get(`/users/${userId}`);
@@ -296,28 +300,26 @@ export async function getUserNameById(userId) {
     return "Unknown User";
   }
 }
- 
-//////////////// Get product sku by id //////////////////
+
+
 export const getProductSkuById = async (skuId) => {
   const res = await product_api.get(`/product_skus/${skuId}`);
   return res.data;
 };
 
-////////////////////////////////////////////////////////
 
-// Fetch all available brands
 export async function getBrands() {
   const response = await product_api.get(`/brands`);
   return response.data;
 }
 
-// Fetch paginated categories
+
 export async function getCategories(pageNumber = 1, pageSize = 20) {
   const response = await product_api.get(`/categories?pageNumber=${pageNumber}&pageSize=${pageSize}`);
   return response.data;
 }
 
-// Submit filter payload to fetch filtered products
+
 export async function getFilteredProducts(filters) {
   const response = await product_api.post(`/products/filter`, filters);
   return response.data;

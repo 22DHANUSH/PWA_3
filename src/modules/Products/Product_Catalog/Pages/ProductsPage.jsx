@@ -101,6 +101,7 @@ function ProductsPage() {
     setLoadingOptions(false);
   };
 
+
   const handleBuyNow = (product) => {
     setLoadingOptions(true);
     setSelectedColor(null);
@@ -111,7 +112,7 @@ function ProductsPage() {
     setIsModalVisible(true);
   };
 
-  // Load wishlist state for visible products
+
   useEffect(() => {
     const fetchWishlistStates = async () => {
       if (!userId || products.length === 0) return;
@@ -135,7 +136,7 @@ function ProductsPage() {
     fetchWishlistStates();
   }, [products, userId]);
 
-  // Add / remove wishlist
+
   const handleToggleWishlist = async (e, productSkuId) => {
     e.stopPropagation();
     if (!userId) {
@@ -166,6 +167,7 @@ function ProductsPage() {
     }
   };
 
+
   const handleAddToCart = async (e, productSkuId, quantity = 1) => {
     e.stopPropagation();
     if (!productSkuId) {
@@ -183,7 +185,7 @@ function ProductsPage() {
     }
 
     try {
-      // Step 1: Get or create cart
+
       let cart = null;
       try {
         const res = await getCartByUserId(userId);
@@ -193,7 +195,7 @@ function ProductsPage() {
         cart = res.data;
       }
 
-      // Step 2: Try to get existing item
+
       let existingItem = null;
       try {
         const res = await getCartItemBySku(cart.cartId, productSkuId);
@@ -206,7 +208,7 @@ function ProductsPage() {
         }
       }
 
-      // Step 3: Update or Add
+
       if (existingItem) {
         await updateCartItem(
           existingItem.cartItemId,
@@ -217,6 +219,7 @@ function ProductsPage() {
         await addCartItem(cart.cartId, productSkuId, quantity);
         message.success("Added to cart");
       }
+
       await refreshCartCount();
     } catch (err) {
       console.error("Error adding to cart:", err);

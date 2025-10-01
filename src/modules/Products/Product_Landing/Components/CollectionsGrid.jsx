@@ -3,10 +3,13 @@ import { PlusOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
 import { Skeleton, Button } from "antd";
 import { Link } from "react-router-dom";
 import { getCollections } from "../../products.api";
+import { useNavigate } from "react-router-dom";
 
 const tabs = ["Men", "Women", "Kid"];
 
 export default function CollectionsGrid() {
+  const navigate = useNavigate();
+
   const [active, setActive] = useState("Women");
   const [items, setItems] = useState(null);
   const scrollerRef = useRef(null);
@@ -15,7 +18,7 @@ export default function CollectionsGrid() {
     let mounted = true;
 
     const categoryMap = {
-      //All: [1, 39, 86],
+
       Men: [1],
       Women: [39],
       Kid: [86],
@@ -24,11 +27,12 @@ export default function CollectionsGrid() {
     getCollections(categoryMap[active]).then((data) => {
       if (mounted) setItems(data);
     });
+    console.log(items);
 
     return () => {
       mounted = false;
     };
-  }, [active]); 
+  }, [active]);
 
   const scroll = (dir) => {
     const node = scrollerRef.current;
@@ -38,6 +42,7 @@ export default function CollectionsGrid() {
       behavior: "smooth",
     });
   };
+  console.log(items);
 
   return (
     <section className="section">
@@ -84,7 +89,11 @@ export default function CollectionsGrid() {
               <div
                 key={c?.imageUrl ?? idx}
                 className="v-stack"
-                style={{ gap: 10, flex: "0 0 284px" }}
+                style={{ gap: 10, flex: "0 0 284px", cursor: c ? "pointer" : "default" }}
+                onClick={() =>
+                  c && navigate(`/productdetails/${c.productId}/${c.productSkuID}`)
+
+                }
               >
                 <div
                   className="tile"
@@ -106,12 +115,7 @@ export default function CollectionsGrid() {
                       style={{ width: "100%", height: "100%" }}
                     />
                   )}
-                  <div className="plus">
-                    <PlusOutlined />
-                  </div>
-                </div>
-                <div className="subtle" style={{ fontSize: 12 }}>
-                  {c?.meta ?? " "}
+
                 </div>
                 <div style={{ fontWeight: 600 }}>{c?.name ?? " "}</div>
                 <div className="subtle" style={{ fontWeight: 600 }}>

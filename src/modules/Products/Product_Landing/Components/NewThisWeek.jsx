@@ -1,12 +1,13 @@
 import { Button, Skeleton } from "antd";
-import { LeftOutlined, PlusOutlined, RightOutlined } from "@ant-design/icons";
+import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { getMensCollection } from "../../products.api";
 
 export default function MensCollection() {
   const [items, setItems] = useState(null);
   const scrollerRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     let mounted = true;
@@ -22,7 +23,7 @@ export default function MensCollection() {
     const node = scrollerRef.current;
     if (!node) return;
     node.scrollBy({
-      left: (dir === "left" ? -1 : 1) * 852, // 3 cards * 284px
+      left: (dir === "left" ? -1 : 1) * 852,
       behavior: "smooth",
     });
   };
@@ -35,8 +36,8 @@ export default function MensCollection() {
           style={{ justifyContent: "space-between", marginBottom: 16 }}
         >
           <div className="heading-xl">
-            MEN&apos;S COLLECTION{" "}
-            <span className="subtle" style={{ fontSize: 16 }}>    
+            MEN&apos;S COLLECTION 2025{" "}
+            <span className="subtle" style={{ fontSize: 16 }}>
               ({items?.length ?? 0})
             </span>
           </div>
@@ -72,7 +73,15 @@ export default function MensCollection() {
               const price = item?.price ? `$ ${item.price}` : " ";
 
               return (
-                <div key={key} className="v-stack" style={{ gap: 10 }}>
+                <div
+                  key={key}
+                  className="v-stack"
+                  style={{ gap: 10, cursor: item ? "pointer" : "default" }}
+                  onClick={() =>
+                    item &&
+                    navigate(`/productdetails/${item.productId}/${item.productSkuID}`)
+                  }
+                >
                   <div
                     className="tile"
                     style={{
@@ -82,20 +91,15 @@ export default function MensCollection() {
                     }}
                   >
                     {item ? (
-                      <>
-                        <img
-                          src={imageUrl}
-                          alt={productName}
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                          }}
-                        />
-                        <div className="plus">
-                          <PlusOutlined />
-                        </div>
-                      </>
+                      <img
+                        src={imageUrl}
+                        alt={productName}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
                     ) : (
                       <Skeleton.Image
                         active
@@ -116,3 +120,4 @@ export default function MensCollection() {
     </section>
   );
 }
+

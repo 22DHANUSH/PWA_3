@@ -1,21 +1,23 @@
 import { Button, Skeleton } from "antd";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { getHeroImages } from "../../products.api";
 
 export default function HeroSection() {
   const [imgs, setImgs] = useState([]);
-  console.log(imgs);
+  const navigate = useNavigate();
+
   useEffect(() => {
     let mounted = true;
     getHeroImages().then((data) => {
-      console.log(data)
       if (mounted) {
-        const imageUrls = data
-          .map((img) => img.imageUrl)
-          .filter((url, index, self) => url && self.indexOf(url) === index); // remove duplicates
-        setImgs(imageUrls);
+        const uniqueImages = data.filter(
+          (img, index, self) =>
+            img.imageUrl &&
+            self.findIndex(i => i.imageUrl === img.imageUrl) === index
+        );
+        setImgs(uniqueImages);
       }
     });
     return () => {
@@ -35,32 +37,41 @@ export default function HeroSection() {
             <br />
             COLLECTION
           </div>
-          <div className="v-stack" style={{ marginTop: 16 }}>
-            <div className="subtle">Winter</div>
-            <div className="subtle">2025</div>
-          </div>
+
           <div className="h-stack" style={{ gap: 12, marginTop: 22 }}>
             <Link to="/products">
               <Button size="large">Go To Shop</Button>
             </Link>
-            <div className="h-stack" style={{ gap: 8 }}>
-              <Button shape="circle" icon={<LeftOutlined />} />
-              <Button shape="circle" icon={<RightOutlined />} />
-            </div>
           </div>
         </div>
 
-        <div className="tile" style={{ aspectRatio: "1 / 1" }}>
+
+        <div
+          className="tile"
+          style={{ aspectRatio: "1 / 1", cursor: "pointer" }}
+          onClick={() =>
+            firstImage &&
+            navigate(`/productdetails/${firstImage.productId}/${firstImage.productSkuId}`)
+          }
+        >
           {firstImage ? (
-            <img src={firstImage} alt="Look 1" />
+            <img src={firstImage.imageUrl} alt="Look 1" />
           ) : (
             <Skeleton.Image active style={{ width: "100%", height: "100%" }} />
           )}
         </div>
 
-        <div className="tile" style={{ aspectRatio: "1 / 1" }}>
+
+        <div
+          className="tile"
+          style={{ aspectRatio: "1 / 1", cursor: "pointer" }}
+          onClick={() =>
+            secondImage &&
+            navigate(`/productdetails/${secondImage.productId}/${secondImage.productSkuId}`)
+          }
+        >
           {secondImage ? (
-            <img src={secondImage} alt="Look 2" />
+            <img src={secondImage.imageUrl} alt="Look 2" />
           ) : (
             <Skeleton.Image active style={{ width: "100%", height: "100%" }} />
           )}

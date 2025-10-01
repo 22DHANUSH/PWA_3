@@ -43,7 +43,7 @@ const CartPage = () => {
   const navigate = useNavigate();
   const { trackBeginCheckout } = useGA4Tracking();
 
-  const dispatch = useDispatch(); // ✅ added
+  const dispatch = useDispatch();
 
   const fetchCart = async () => {
     try {
@@ -77,11 +77,16 @@ const CartPage = () => {
       const { data: cartData } = await getCartByUserId(userId);
       setCart(cartData);
 
-      if (!cartData) {
+
+      if (!cartData || !cartData.cartId) {
         setItems([]);
+        setCart(null);
         await refreshCartCount();
+
         return;
+
       }
+
 
       const { data: itemsData } = await getCartItemsByCart(cartData.cartId);
       const itemsWithImages = await Promise.all(
@@ -106,8 +111,8 @@ const CartPage = () => {
       setItems(itemsWithImages);
       await refreshCartCount();
     } catch (err) {
-      // console.error(err);
-      message.info("Cart is Empty");
+
+
     } finally {
       setLoading(false);
     }
@@ -171,14 +176,7 @@ const CartPage = () => {
   const totalItems = items.reduce((acc, item) => acc + item.quantity, 0);
   const total = subtotal;
 
-  // const handleCheckout = () => {
-  //   if (!userId) {
-  //     message.info("Please log in to proceed with checkout");
-  //     navigate("/login");
-  //     return;
-  //   }
-  //   navigate("/checkout");
-  // };
+
 
   const handleCheckout = () => {
     if (!userId) {
@@ -211,140 +209,163 @@ const CartPage = () => {
     <Row gutter={[16, 16]} className="cart-container">
       <Col xs={24} md={16}>
         <Title level={2}>My Cart</Title>
-        {items.map((item) => {
-          const price = parseFloat(item.productPrice.replace("$", ""));
-          const itemTotal = price * item.quantity;
-
-          return (
-            <Card
-              key={item.cartItemId || item.productSkuId}
-              className="cart-item"
+        {items.length === 0 ? (
+          <div style={{ padding: "50px", textAlign: "center", color: "#888", marginLeft: "500px" }}>
+            <Text strong style={{ fontSize: 30 }}>
+              Your cart is currently empty.
+            </Text>
+            <br />
+            <Button
+              type="link"
+              style={{ marginTop: 16 }}
+              onClick={() => navigate("/products")}
             >
-              <Row align="middle">
-                <Col
-                  span={4}
-                  onClick={() =>
-                    navigate(
-                      `/productdetails/${item.productId}/${item.productSkuId}`
-                    )
-                  }
-                  className="cart-product-clickable"
-                >
-                  <img
-                    src={item.productImage}
-                    alt={item.productTitle}
-                    className="cart-product-image"
-                  />
-                </Col>
+              ← Continue Shopping
+            </Button>
+          </div>
+        ) : (
+          items.map((item) => {
+            const price = parseFloat(item.productPrice.replace("$", ""));
+            const itemTotal = price * item.quantity;
 
-                <Col span={16} className="cart-product-details">
-                  <Title
-                    level={4}
-                    className="cart-product-title"
+            return (
+              <Card
+                key={item.cartItemId || item.productSkuId}
+                className="cart-item"
+              >
+                <Row align="middle">
+                  <Col
+                    span={4}
                     onClick={() =>
                       navigate(
                         `/productdetails/${item.productId}/${item.productSkuId}`
                       )
                     }
+                    className="cart-product-clickable"
                   >
-                    {item.productTitle}{" "}
-                    {item.isOutOfStock && <Tag color="red">Out of Stock</Tag>}
-                  </Title>
+                    <img
+                      src={item.productImage}
+                      alt={item.productTitle}
+                      className="cart-product-image"
+                    />
+                  </Col>
 
-                  <Text strong>{item.productPrice}</Text>
-                  <div className="cart-product-meta">
-                    <Text type="secondary">
-                      Size: {item.productSize} | Color: {item.productColor}
-                    </Text>
-                  </div>
+                  <Col span={16} className="cart-product-details">
+                    <Title
+                      level={4}
+                      className="cart-product-title"
+                      onClick={() =>
+                        navigate(
+                          `/productdetails/${item.productId}/${item.productSkuId}`
+                        )
+                      }
+                    >
+                      {item.productTitle}{" "}
+                      {item.isOutOfStock && <Tag color="red">Out of Stock</Tag>}
+                    </Title>
 
-                  <div className="cart-product-quantity">
-                    <div className="quantity-inline">
-                      <Text style={{ marginRight: 8 }}>Quantity:</Text>
-                      <Button
-                        size="small"
-                        onClick={() =>
-                          handleUpdateQuantity(
-                            item.cartItemId,
-                            Math.max(1, item.quantity - 1),
-                            item.productSkuId
-                          )
-                        }
-                        disabled={item.isOutOfStock || item.quantity <= 1}
-                      >
-                        -
-                      </Button>
-                      <span className="quantity-value">{item.quantity}</span>
-                      <Button
-                        size="small"
-                        onClick={() =>
-                          handleUpdateQuantity(
-                            item.cartItemId,
-                            item.quantity + 1,
-                            item.productSkuId
-                          )
-                        }
-                        disabled={item.isOutOfStock}
-                      >
-                        +
-                      </Button>
+                    <Text strong>{item.productPrice}</Text>
+                    <div className="cart-product-meta">
+                      <Text type="secondary">
+                        Size: {item.productSize} | Color: {item.productColor}
+                      </Text>
                     </div>
-                  </div>
 
-                  <div className="cart-product-total">
-                    <Text strong>Total: ${itemTotal.toFixed(2)}</Text>
-                  </div>
-                </Col>
+                    <div className="cart-product-quantity">
+                      <div className="quantity-inline">
+                        <Text style={{ marginRight: 8 }}>Quantity:</Text>
+                        <Button
+                          size="small"
+                          onClick={() =>
+                            handleUpdateQuantity(
+                              item.cartItemId,
+                              Math.max(1, item.quantity - 1),
+                              item.productSkuId
+                            )
+                          }
+                          disabled={item.isOutOfStock || item.quantity <= 1}
+                        >
+                          -
+                        </Button>
+                        <span className="quantity-value">{item.quantity}</span>
+                        <Button
+                          size="small"
+                          onClick={() =>
+                            handleUpdateQuantity(
+                              item.cartItemId,
+                              item.quantity + 1,
+                              item.productSkuId
+                            )
+                          }
+                          disabled={item.isOutOfStock}
+                        >
+                          +
+                        </Button>
+                      </div>
+                    </div>
 
-                <Col span={4} className="cart-remove-btn">
-                  <Button
-                    type="text"
-                    danger
-                    icon={<DeleteOutlined />}
-                    onClick={() =>
-                      handleRemoveItem(item.cartItemId, item.productSkuId)
-                    }
-                  />
-                </Col>
-              </Row>
-            </Card>
-          );
-        })}
+                    <div className="cart-product-total">
+                      <Text strong>Total: ${itemTotal.toFixed(2)}</Text>
+                    </div>
+                  </Col>
+
+                  <Col span={4} className="cart-remove-btn">
+                    <Button
+                      type="text"
+                      danger
+                      icon={<DeleteOutlined />}
+                      onClick={() =>
+                        handleRemoveItem(item.cartItemId, item.productSkuId)
+                      }
+                    />
+                  </Col>
+                </Row>
+              </Card>
+            );
+          })
+        )}
       </Col>
 
       <Col xs={24} md={8}>
-        <Card style={{ marginTop: "50px" }}>
-          <Title level={4}>Cart Details </Title>
-          <Row justify="space-between">
-            <Text>Subtotal</Text>
-            <Text>${subtotal.toFixed(2)}</Text>
-          </Row>
-          <Row justify="space-between">
-            <Text>Total Items</Text>
-            <Text>{totalItems}</Text>
-          </Row>
-          <Divider />
-          <Button
-            type="primary"
-            block
-            size="large"
-            className="checkout-btn"
-            onClick={handleCheckout}
-          >
-            View Order Summary →
-          </Button>
-          <Button
-            block
-            size="large"
-            style={{ marginTop: "10px" }}
-            onClick={() => navigate("/products")}
-          >
-            ← Continue Shopping
-          </Button>
-        </Card>
+        {items.length > 0 && (
+          <Card style={{ marginTop: "50px" }}>
+            <Title level={4}>Cart Details </Title>
+            <Row justify="space-between">
+              <Text>Subtotal</Text>
+              <Text>${subtotal.toFixed(2)}</Text>
+            </Row>
+            <Row justify="space-between">
+              <Text>Total Items</Text>
+              <Text>{totalItems}</Text>
+            </Row>
+            <Divider />
+            <Button
+              type="primary"
+              block
+              size="large"
+              className="checkout-btn"
+              onClick={handleCheckout}
+            >
+              View Order Summary →
+            </Button>
+            <Button
+              block
+              size="large"
+              style={{ marginTop: "10px" }}
+              onClick={() => navigate("/products")}
+            >
+              ← Continue Shopping
+            </Button>
+          </Card>
+        )}
       </Col>
     </Row>
   );
+
 };
 
 export default CartPage;
+
+
+
+
