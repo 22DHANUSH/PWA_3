@@ -132,6 +132,16 @@ export const deleteWishlistItem = async (wishlistItemId) => {
   return res.data;
 };
 
+export const deleteWishlistItemByUserIdAndProductSkuId = async (
+  userId,
+  productSkuId
+) => {
+  const res = await user_api.delete(
+    `/wishlist_item/users/${userId}/product/${productSkuId}`
+  );
+  return res.data;
+};
+
 export const checkWishlist = async (userId, productSkuId) => {
   const res = await user_api.get(
     `/wishlist_item/users/${userId}/product/${productSkuId}`
