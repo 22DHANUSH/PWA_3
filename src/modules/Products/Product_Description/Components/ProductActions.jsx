@@ -162,22 +162,6 @@ const ProductActions = ({ stock, price, userId, productSkuId, product }) => {
           Add to Cart
         </Button>
 
-        <Button
-          type="default"
-          icon={<ShoppingOutlined />}
-          style={{
-            borderColor: "#000",
-            color: "#000",
-            backgroundColor: "#fff",
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.backgroundColor = "#f5f5f5")
-          }
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#fff")}
-        >
-          Buy Now
-        </Button>
-
         <div style={{ flex: 1, minWidth: "120px", maxWidth: "180px" }}>
           <WishlistButton userId={userId} productSkuId={productSkuId} />
         </div>

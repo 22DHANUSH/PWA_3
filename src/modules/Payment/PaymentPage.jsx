@@ -65,6 +65,7 @@ export default function PaymentPage() {
         userName,
         phoneNumber,
         emailId,
+        address
       });
     } else if (paymentMethod === "braintree") {
       setShowBraintree(true);

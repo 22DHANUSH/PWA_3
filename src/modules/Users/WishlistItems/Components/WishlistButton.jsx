@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { Button, message } from "antd";
-import {addWishlistItem,checkWishlist,deleteWishlistItem,} from "./../../users.api";
+import {
+  addWishlistItem,
+  checkWishlist,
+  deleteWishlistItem,
+} from "./../../users.api";
 
 const WishlistButton = ({ userId, productSkuId }) => {
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -19,7 +23,7 @@ const WishlistButton = ({ userId, productSkuId }) => {
       }
     } catch (err) {
       if (err.response && err.response.status === 404) {
-        setIsWishlisted(false);       
+        setIsWishlisted(false);
         setWishlistItemId(null);
       } else {
         console.error(err);
@@ -35,8 +39,7 @@ const WishlistButton = ({ userId, productSkuId }) => {
         message.success("Removed from wishlist");
         setIsWishlisted(false);
         setWishlistItemId(null);
-      } 
-      else {
+      } else {
         const res = await addWishlistItem(userId, productSkuId);
         if (res === -1) {
           message.info("Already in wishlist");
@@ -49,7 +52,7 @@ const WishlistButton = ({ userId, productSkuId }) => {
       }
     } catch (err) {
       console.error(err);
-      message.error("Wishlist action failed");
+      message.error("Login to manage Wishlist");
     } finally {
       setLoading(false);
     }
@@ -64,7 +67,7 @@ const WishlistButton = ({ userId, productSkuId }) => {
       type={isWishlisted ? "primary" : "default"}
       style={{
         backgroundColor: isWishlisted ? "black" : undefined,
-        color: isWishlisted ? "white" : undefined,        
+        color: isWishlisted ? "white" : undefined,
       }}
       loading={loading}
       onClick={handleToggleWishlist}

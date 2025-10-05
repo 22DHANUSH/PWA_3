@@ -49,3 +49,14 @@ export async function getPrimaryImageBySku(skuId) {
     return null;
   }
 }
+
+// Update an order (status, totalAmount, userId, addressId)
+export const updateOrder = async (orderId, orderData) => {
+  try {
+    const response = await order_api.put(`/orders/${orderId}`, orderData);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating order:", error);
+    throw error;
+  }
+};

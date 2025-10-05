@@ -4,11 +4,11 @@ import {
   verifyRazorpayPayment,
   createPayment,
 } from "../Payment/payment.api";
-import { useSelector } from "react-redux";
 import { clearCartByUser } from "../Cart/cart.api.js";
-
-const checkout_url =import.meta.env.VITE_RAZOR_CHECKOUT_URL;
-
+import { updateOrder } from "../Orders/order.api.js";
+ 
+const checkout_url = import.meta.env.VITE_RAZOR_CHECKOUT_URL;
+ 
 export async function handleRazorpayPayment({
   amount,
   userId,
@@ -16,6 +16,7 @@ export async function handleRazorpayPayment({
   userName,
   phoneNumber,
   emailId,
+  address,
 }) {
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
@@ -26,13 +27,13 @@ export async function handleRazorpayPayment({
       document.body.appendChild(script);
     });
   };
-
+ 
   const isScriptLoaded = await loadRazorpayScript();
   if (!isScriptLoaded) {
     message.error("Razorpay SDK failed to load. Please try again.");
     return;
   }
-
+ 
   try {
     const response = await createRazorpayOrder(amount);
     const {
@@ -41,7 +42,7 @@ export async function handleRazorpayPayment({
       key,
       orderId: razorpayOrderId,
     } = response.data;
-
+ 
     const verifyPayment = async ({
       razorpay_payment_id,
       razorpay_order_id,
@@ -53,10 +54,8 @@ export async function handleRazorpayPayment({
           OrderId: razorpay_order_id,
           Signature: razorpay_signature,
         });
-
-        if (verifyData.data.success === true) {
-          message.success(verifyData.data.message);
-
+ 
+        try {
           const payData = {
             paymentMethod: verifyData.data.paymentMethod,
             paymentStatus: verifyData.data.success.toString(),
@@ -67,33 +66,58 @@ export async function handleRazorpayPayment({
             transactionId: verifyData.data.transactionId,
             paymentGateway: "Razorpay",
           };
-
           await createPayment(payData);
-
-          const deleted = await clearCartByUser(userId);
-          console.log(deleted);
-          window.location.href = "/pastorder";
-        } else {
-          const payData = {
-            paymentMethod: verifyData.data.paymentMethod,
-            paymentStatus: verifyData.data.success.toString(),
-            paymentDate: new Date().toISOString(),
-            amount: orderAmount,
-            orderId,
-            userId,
-            transactionId: verifyData.data.transactionId,
-            paymentGateway: "Razorpay",
-          };
-
-          await createPayment(payData);
-          message.error(verifyData.data.message);
+          console.log("Payment logged:", payData);
+        } catch (paymentErr) {
+          console.error("Failed to create payment record:", paymentErr);
+          message.error("Could not save payment record. Contact support.");
+          return;
         }
+ 
+        // 2️⃣ Update order
+        try {
+          const orderUpdateData = {
+            status: "Payment Successful",
+            totalAmount: orderAmount,
+            userId: userId,
+            orderDate: new Date().toISOString(),
+ 
+            addressId: address.addressId,
+          };
+ 
+          const updatedOrder = await updateOrder(orderId, orderUpdateData);
+          console.log("Order updated:", updatedOrder);
+        } catch (orderErr) {
+          console.error("Failed to update order:", orderErr);
+          message.error(
+            verifyData.data.success
+              ? "Payment succeeded, but order status could not be updated."
+              : "Payment failed, and order status could not be updated."
+          );
+        }
+ 
+        // 3️⃣ Clear cart
+        try {
+          await clearCartByUser(userId);
+        } catch (cartErr) {
+          console.error("Failed to clear cart:", cartErr);
+          message.warning("Cart was not cleared automatically.");
+        }
+ 
+        // 4️⃣ Show messages & navigate
+        if (verifyData.data.success) {
+          message.success(verifyData.data.message);
+        } else {
+          message.error(verifyData.data.message || "Payment failed.");
+        }
+ 
+        window.location.href = `/order-tracking/${orderId}`;
       } catch (err) {
         console.error("Verification error:", err);
-        message.error("Payment verification failed.");
+        message.error("Payment verification failed. Please contact support.");
       }
     };
-
+ 
     const options = {
       key,
       amount: orderAmount,
@@ -113,9 +137,9 @@ export async function handleRazorpayPayment({
         color: "#528FF0",
       },
     };
-
+ 
     const razorpayInstance = new window.Razorpay(options);
-
+ 
     razorpayInstance.on("payment.failed", async (response) => {
       const { payment_id, order_id } = response.error.metadata;
       await verifyPayment({
@@ -124,7 +148,7 @@ export async function handleRazorpayPayment({
         razorpay_signature: null,
       });
     });
-
+ 
     razorpayInstance.open();
   } catch (error) {
     console.error("Payment error:", error);
