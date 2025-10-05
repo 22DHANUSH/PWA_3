@@ -14,36 +14,36 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { signup } from "./../../users.api";
 import { setUser } from "./../../users.slice";
-import "../auth.css";
+import "../Auth.css";
 import "../../../../assets/styles/global.css";
 import logo from "/images/columbialogo.png";
 import { mergeGuestCart } from "../../../Cart/cart.api";
 import AuthFooter from "../../../Products/Product_Landing/Components/AuthFooter";
 import AuthHeader from "../../../Products/Product_Landing/Components/AuthHeader";
- 
+
 const { Title } = Typography;
- 
+
 export default function Signup() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [form] = Form.useForm();
- 
+
   const onFinish = async (values) => {
     if (values.PasswordHash !== values.confirmPassword) {
       message.error("Passwords do not match");
       return;
     }
- 
+
     const fullPhoneNumber = `${values.CountryCode}${values.PhoneNumber}`;
     const { confirmPassword, CountryCode, PhoneNumber, ...rest } = values;
     const payload = { ...rest, PhoneNumber: fullPhoneNumber };
- 
+
     setLoading(true);
     try {
       const res = await signup(payload);
       message.success(res.message || "Sign up successful");
- 
+
       if (res.userId) {
         dispatch(setUser({ userId: res.userId, email: values.email }));
         await mergeGuestCart(res.userId);
@@ -56,7 +56,7 @@ export default function Signup() {
       setLoading(false);
     }
   };
- 
+
   return (
     <>
       <AuthHeader />
@@ -64,17 +64,17 @@ export default function Signup() {
         <div className="auth-left">
           <div className="auth-left-overlay"></div>
         </div>
- 
+
         <div className="auth-right">
           <div className="auth-card">
             <div className="auth-logo">
               <img src={logo} alt="Brand Logo" />
             </div>
- 
+
             <Title level={3} className="auth-title">
               Sign Up
             </Title>
- 
+
             <Form layout="vertical" onFinish={onFinish} form={form}>
               <Row gutter={[16, 16]}>
                 <Col xs={24} sm={24} md={12}>
@@ -100,7 +100,7 @@ export default function Signup() {
                   </Form.Item>
                 </Col>
               </Row>
- 
+
               <Row gutter={[16, 16]}>
                 <Col xs={24} sm={24} md={12}>
                   <Form.Item
@@ -155,7 +155,7 @@ export default function Signup() {
                           <Select.Option value="+81">+81</Select.Option>
                         </Select>
                       </Form.Item>
- 
+
                       <Form.Item
                         name="PhoneNumber"
                         noStyle
@@ -166,8 +166,7 @@ export default function Signup() {
                           },
                           {
                             pattern: /^\d{10,15}$/,
-                            message:
-                              "Valid Mobile Number is required",
+                            message: "Valid Mobile Number is required",
                           },
                         ]}
                       >
@@ -181,7 +180,7 @@ export default function Signup() {
                   </Form.Item>
                 </Col>
               </Row>
- 
+
               <Row gutter={[16, 16]}>
                 <Col xs={24} sm={24} md={12}>
                   <Form.Item
@@ -203,7 +202,7 @@ export default function Signup() {
                     <Input.Password placeholder="Enter Password" />
                   </Form.Item>
                 </Col>
- 
+
                 <Col xs={24} sm={24} md={12}>
                   <Form.Item
                     label="Confirm Password"
@@ -233,30 +232,35 @@ export default function Signup() {
                   </Form.Item>
                 </Col>
               </Row>
- 
+
               <Form.Item
                 name="consent"
                 valuePropName="checked"
                 rules={[
                   {
                     validator: (_, value) =>
-                    value
-                    ? Promise.resolve()
-                    : Promise.reject(new Error("You must consent to proceed")),
+                      value
+                        ? Promise.resolve()
+                        : Promise.reject(
+                            new Error("You must consent to proceed")
+                          ),
                   },
                 ]}
               >
                 <Checkbox onChange={() => form.validateFields(["consent"])}>
-                  <span style={{ color: "red", marginRight: "4px" }}>*</span>
-                    I consent to the{" "}
-                  <span className="data-link" title="By registering, you agree to the collection and processing of your personal information in accordance with our Privacy Policy. This includes your name, email address, pone number and any other details you provide during registration.">
+                  <span style={{ color: "red", marginRight: "4px" }}>*</span>I
+                  consent to the{" "}
+                  <span
+                    className="data-link"
+                    title="By registering, you agree to the collection and processing of your personal information in accordance with our Privacy Policy. This includes your name, email address, pone number and any other details you provide during registration."
+                  >
                     use of my data
                   </span>{" "}
-                    for account creation, communication, and personalized services.
+                  for account creation, communication, and personalized
+                  services.
                 </Checkbox>
               </Form.Item>
- 
- 
+
               <Form.Item>
                 <Button
                   type="default"
@@ -269,7 +273,7 @@ export default function Signup() {
                 </Button>
               </Form.Item>
             </Form>
- 
+
             <p className="auth-footer">
               Already have an account?{" "}
               <a href="/login" className="auth-link">
@@ -283,4 +287,3 @@ export default function Signup() {
     </>
   );
 }
- 
