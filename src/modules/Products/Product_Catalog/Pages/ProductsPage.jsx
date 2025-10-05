@@ -16,8 +16,7 @@ import { useProducts } from "../../ProductContext";
 import { useNavigate } from "react-router-dom";
 import {
   addWishlistItem,
-  deleteWishlistItem,
-  checkWishlist,
+  deleteWishlistItemByUserIdAndProductSkuId,
 } from "../../../Users/users.api";
 import {
   getCartByUserId,
@@ -97,10 +96,14 @@ function ProductsPage() {
   const [loadingOptions, setLoadingOptions] = useState(true);
   const [selectedSku, setSelectedSku] = useState(null);
   const { trackAddToCart, trackAddToWishlist } = useGA4Tracking();
+  const [localProducts, setLocalProducts] = useState([]);
+  useEffect(() => {
+    setLocalProducts(products);
+  }, [products]);
+
   const handleOptionsLoaded = () => {
     setLoadingOptions(false);
   };
-
 
   const handleBuyNow = (product) => {
     setLoadingOptions(true);
@@ -112,30 +115,29 @@ function ProductsPage() {
     setIsModalVisible(true);
   };
 
-
   useEffect(() => {
-    const fetchWishlistStates = async () => {
-      if (!userId || products.length === 0) return;
-
-      const map = {};
-      for (const p of products) {
-        try {
-          const res = await checkWishlist(userId, p.productSkuID);
-          if (res.isWishlisted) {
-            map[p.productSkuID] = res.wishlistItem.wishlistItemId;
-          } else {
-            map[p.productSkuID] = null;
-          }
-        } catch {
-          map[p.productSkuID] = null;
-        }
-      }
-      setWishlistMap(map);
-    };
-
     fetchWishlistStates();
-  }, [products, userId]);
+  }, [localProducts]);
 
+  const fetchWishlistStates = async () => {
+    if (!userId || localProducts.length === 0) return;
+
+    const map = {};
+    for (const p of localProducts) {
+      map[p.productSkuID] = p.isWishlisted == 1 ? p.isWishlisted : 0;
+    }
+    setWishlistMap(map);
+  };
+
+  const updateProductWishlistFlag = (skuId, flag) => {
+    setLocalProducts((prev) =>
+      prev.map((product) =>
+        product.productSkuID === skuId
+          ? { ...product, isWishlisted: flag }
+          : product
+      )
+    );
+  };
 
   const handleToggleWishlist = async (e, productSkuId) => {
     e.stopPropagation();
@@ -148,17 +150,28 @@ function ProductsPage() {
 
     try {
       if (wishlistItemId) {
-        await deleteWishlistItem(wishlistItemId);
-        message.error("Removed from wishlist");
-        setWishlistMap((prev) => ({ ...prev, [productSkuId]: null }));
+        const res = await deleteWishlistItemByUserIdAndProductSkuId(
+          userId,
+          productSkuId
+        );
+        if (res?.deleted) {
+          message.error("Removed from wishlist");
+          setWishlistMap((prev) => ({ ...prev, [productSkuId]: 0 }));
+          updateProductWishlistFlag(productSkuId, 0);
+        } else {
+          message.error("Failed to remove from wishlist");
+        }
       } else {
         const addedAt = new Date().toISOString();
         const res = await addWishlistItem(userId, productSkuId, addedAt);
         if (res === -1) {
           message.info("Already in wishlist");
-        } else {
+        } else if (res > 0) {
           message.success("Added to wishlist");
-          setWishlistMap((prev) => ({ ...prev, [productSkuId]: res }));
+          setWishlistMap((prev) => ({ ...prev, [productSkuId]: 1 }));
+          updateProductWishlistFlag(productSkuId, 1);
+        } else {
+          message.error("Failed to add to wishlist");
         }
       }
     } catch (err) {
@@ -166,7 +179,6 @@ function ProductsPage() {
       message.error("Failed to update wishlist");
     }
   };
-
 
   const handleAddToCart = async (e, productSkuId, quantity = 1) => {
     e.stopPropagation();
@@ -178,14 +190,11 @@ function ProductsPage() {
     if (!userId) {
       addToGuestCart({ productSkuId }, quantity);
       message.success("Added to cart");
-
       await refreshCartCount();
-
       return;
     }
 
     try {
-
       let cart = null;
       try {
         const res = await getCartByUserId(userId);
@@ -194,7 +203,6 @@ function ProductsPage() {
         const res = await createCart(userId);
         cart = res.data;
       }
-
 
       let existingItem = null;
       try {
@@ -207,7 +215,6 @@ function ProductsPage() {
           throw err;
         }
       }
-
 
       if (existingItem) {
         await updateCartItem(
@@ -235,7 +242,7 @@ function ProductsPage() {
     <div style={{ padding: "0 16px" }}>
       <div style={{ marginTop: 16, marginBottom: 16 }}>
         <Title level={4}>
-          Products <span>({products.length})</span>
+          Products <span>({localProducts.length})</span>
         </Title>
       </div>
 
@@ -245,14 +252,19 @@ function ProductsPage() {
         <Empty description="No products found for selected filters." />
       ) : (
         <>
-          <Row gutter={[16, 16]}>
-            {products.map((p, idx) => {
-              const wishlisted = wishlistMap[p.productSkuID] != null;
+          <Row gutter={[16, 16]} justify="center">
+            {localProducts.map((p, idx) => {
+              const wishlisted = wishlistMap[p.productSkuID] === 1;
               return (
-                <Col span={8} key={p.productId || `product-${idx}`}>
+                <Col
+                  key={p.productId || `product-${idx}`}
+                  xs={24} // 1 col on phones
+                  sm={12} // 2 cols on tablets
+                  md={8} // 3 cols on desktop
+                >
                   <Card
                     hoverable
-                    style={{ position: "relative" }}
+                    style={{ position: "relative", height: "100%" }}
                     cover={
                       <div style={{ position: "relative" }}>
                         <img
@@ -291,7 +303,6 @@ function ProductsPage() {
                           <HeartOutlined
                             onClick={(e) => {
                               handleToggleWishlist(e, p.productSkuID);
-
                               trackAddToWishlist({
                                 productTitle: p.productName || p.productTitle,
                                 productPrice: Number(p.productPrice) || 0,
@@ -331,13 +342,21 @@ function ProductsPage() {
                           >
                             ${p.productPrice ?? "—"}
                           </span>
-                          <div style={{ display: "flex", gap: 8 }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: 8,
+                              flexWrap: "wrap",
+                              justifyContent: "center",
+                            }}
+                          >
                             <Button
                               type="primary"
                               size="middle"
                               onClick={() => {
                                 handleBuyNow(p);
                                 trackAddToCart({
+                                  productSkuId: p.productSkuID,
                                   productTitle: p.productName || p.productTitle,
                                   productPrice: Number(p.productPrice) || 0,
                                   productId: p.productId,
@@ -346,10 +365,6 @@ function ProductsPage() {
                             >
                               Add to Cart
                             </Button>
-                            <Button type="default" size="middle">
-                              Buy Now
-                            </Button>
-
                             <Modal
                               className="no-mask-background"
                               open={isModalVisible && !!selectedProduct}
