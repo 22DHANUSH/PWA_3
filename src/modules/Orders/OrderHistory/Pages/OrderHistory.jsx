@@ -12,6 +12,7 @@ import {
   Space,
   Button,
   message,
+  Flex,
 } from "antd";
 import {
   DownOutlined,
@@ -40,7 +41,15 @@ const OrderHistory = () => {
   const [page, setPage] = useState(1);
   const pageSize = 5;
 
-  const paginatedOrders = orders.slice((page - 1) * pageSize, page * pageSize);
+  // Filter out "Pending" orders
+  const filteredOrders = orders.filter(
+    (order) => order.status !== "Payment Pending"
+  );
+
+  const paginatedOrders = filteredOrders.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  );
 
   useEffect(() => {
     if (userId) {
@@ -84,7 +93,7 @@ const OrderHistory = () => {
     const isExpanding = expanded !== id;
     setExpanded(isExpanding ? id : null);
 
-    const order = orders.find((o) => o.orderId === id);
+    const order = filteredOrders.find((o) => o.orderId === id);
     if (isExpanding && order && !order.items) {
       fetchOrderItems(id);
     }
@@ -128,7 +137,7 @@ const OrderHistory = () => {
           <Space direction="vertical" size="large" style={{ width: "100%" }}>
             {paginatedOrders.length === 0 && (
               <Text type="secondary" style={{ fontSize: 16 }}>
-                No orders found.
+                No completed or shipped orders found.
               </Text>
             )}
 
@@ -175,7 +184,33 @@ const OrderHistory = () => {
                         gap: 6,
                       }}
                     >
-                      {statusTag(order.status)}
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "flex-end",
+                          gap: "10px",
+                          width: "100%",
+                        }}
+                      >
+                        {statusTag(order.status)}
+                        <Button
+                          type="primary"
+                          size="small"
+                          style={{
+                            borderRadius: 6,
+                            backgroundColor: "#000000",
+                            borderColor: "#000000",
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/order-tracking/${order.orderId}`);
+                          }}
+                        >
+                          Track Order
+                        </Button>
+                      </div>
+
                       <div
                         style={{
                           fontWeight: "bold",
@@ -183,25 +218,9 @@ const OrderHistory = () => {
                           color: "#000000",
                         }}
                       >
-                        ₹{order.totalAmount.toFixed(2)}
+                        ${order.totalAmount.toFixed(2)}
                       </div>
-                      <Button
-                        type="primary"
-                        size="small"
-                        style={{
-                          borderRadius: 6,
-                          backgroundColor: "#000000",
-                          borderColor: "#000000",
-                          width: "100%",
-                          maxWidth: 140,
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/order-tracking/${order.orderId}`);
-                        }}
-                      >
-                        Track Order
-                      </Button>
+
                       <motion.div
                         animate={{
                           rotate: expanded === order.orderId ? 180 : 0,
@@ -262,34 +281,49 @@ const OrderHistory = () => {
                                         {item.product_name}
                                       </Text>
                                       <br />
-                                      <Text type="secondary" style={{ fontSize: 13 }}>
+                                      <Text
+                                        type="secondary"
+                                        style={{ fontSize: 13 }}
+                                      >
                                         SKU: {item.sku}
                                       </Text>
                                       <br />
-                                      <Text type="secondary" style={{ fontSize: 13 }}>
+                                      <Text
+                                        type="secondary"
+                                        style={{ fontSize: 13 }}
+                                      >
                                         Size: {item.size || "N/A"}
                                       </Text>
                                       <br />
-                                      <Text type="secondary" style={{ fontSize: 13 }}>
+                                      <Text
+                                        type="secondary"
+                                        style={{ fontSize: 13 }}
+                                      >
                                         Color: {item.color || "N/A"}
                                       </Text>
                                     </div>
                                   </Space>
                                 </Col>
-                                <Col xs={24} sm={8} md={6} style={{ textAlign: "right" }}>
+                                <Col
+                                  xs={24}
+                                  sm={8}
+                                  md={6}
+                                  style={{ textAlign: "right" }}
+                                >
                                   <Text style={{ fontSize: 14 }}>
-                                    Qty: {item.quantity}
+                                    Quantity: {item.quantity}
                                   </Text>
                                   <br />
                                   <Text style={{ fontSize: 14 }}>
-                                    Unit: ₹{item.unitPrice.toFixed(2)}
+                                    Price(per item): $
+                                    {item.unitPrice.toFixed(2)}
                                   </Text>
                                   <br />
                                   <Text
                                     strong
                                     style={{ fontSize: 16, color: "#000000" }}
                                   >
-                                    Total: ₹{item.totalPrice.toFixed(2)}
+                                    Total: ${item.totalPrice.toFixed(2)}
                                   </Text>
                                 </Col>
                               </Row>
@@ -307,10 +341,15 @@ const OrderHistory = () => {
           {/* Pagination */}
           <Pagination
             current={page}
-            total={orders.length}
+            total={filteredOrders.length}
             pageSize={pageSize}
             onChange={(p) => setPage(p)}
-            style={{ marginTop: 32, textAlign: "center" }}
+            style={{
+              marginTop: 32,
+              textAlign: "center",
+              display: Flex,
+              justifyContent: "center",
+            }}
             showSizeChanger={false}
             size="default"
           />

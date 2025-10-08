@@ -16,10 +16,11 @@ import { signup } from "./../../users.api";
 import { setUser } from "./../../users.slice";
 import "../Auth.css";
 import "../../../../assets/styles/global.css";
-import logo from "/images/columbialogo.png";
+import logo from "../../../../assets/images/columbialogo.png";
 import { mergeGuestCart } from "../../../Cart/cart.api";
 import AuthFooter from "../../../Products/Product_Landing/Components/AuthFooter";
 import AuthHeader from "../../../Products/Product_Landing/Components/AuthHeader";
+import { useCart } from "../../../Cart/CartContext";
 
 const { Title } = Typography;
 
@@ -28,10 +29,16 @@ export default function Signup() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [form] = Form.useForm();
+  const { refreshCartCount } = useCart();
 
   const onFinish = async (values) => {
     if (values.PasswordHash !== values.confirmPassword) {
-      message.error("Passwords do not match");
+      form.setFields([
+        {
+          name: "confirmPassword",
+          errors: ["Passwords do not match"],
+        },
+      ]);
       return;
     }
 
@@ -42,16 +49,37 @@ export default function Signup() {
     setLoading(true);
     try {
       const res = await signup(payload);
-      message.success(res.message || "Sign up successful");
 
       if (res.userId) {
+        message.success(res.message || "Sign up successful");
         dispatch(setUser({ userId: res.userId, email: values.email }));
         await mergeGuestCart(res.userId);
-        navigate("/products");
+        await refreshCartCount();
+        navigate("/");
+        return;
       }
+
+      message.error("Signup failed. Please try again.");
     } catch (err) {
-      console.error(err);
-      message.error("Signup failed");
+      console.error("Signup error:", err);
+
+      const fieldErrors = err?.response?.data?.errors;
+      if (fieldErrors && typeof fieldErrors === "object") {
+        const formattedErrors = Object.entries(fieldErrors).map(
+          ([field, errorMsg]) => ({
+            name: field,
+            errors: [errorMsg],
+          })
+        );
+        form.setFields(formattedErrors);
+        form.scrollToField(formattedErrors[0].name);
+
+        const errorSummary = Object.values(fieldErrors).join(" | ");
+        message.error(`Signup failed: ${errorSummary}`);
+      } else {
+        const fallbackError = err?.message || "Please try again.";
+        message.error(`Signup failed: ${fallbackError}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -76,6 +104,7 @@ export default function Signup() {
             </Title>
 
             <Form layout="vertical" onFinish={onFinish} form={form}>
+              {}
               <Row gutter={[16, 16]}>
                 <Col xs={24} sm={24} md={12}>
                   <Form.Item
@@ -101,6 +130,7 @@ export default function Signup() {
                 </Col>
               </Row>
 
+              {}
               <Row gutter={[16, 16]}>
                 <Col xs={24} sm={24} md={12}>
                   <Form.Item
@@ -118,23 +148,7 @@ export default function Signup() {
                   </Form.Item>
                 </Col>
                 <Col xs={24} sm={24} md={12}>
-                  <Form.Item
-                    label="Phone Number"
-                    required
-                    rules={[
-                      {
-                        validator: (_, value) => {
-                          const phone = form.getFieldValue("PhoneNumber");
-                          if (!phone || !/^\d{10,15}$/.test(phone)) {
-                            return Promise.reject(
-                              "Enter a valid mobile number (10–15 digits)"
-                            );
-                          }
-                          return Promise.resolve();
-                        },
-                      },
-                    ]}
-                  >
+                  <Form.Item label="Phone Number" required>
                     <Input.Group compact>
                       <Form.Item
                         name="CountryCode"
@@ -166,7 +180,8 @@ export default function Signup() {
                           },
                           {
                             pattern: /^\d{10,15}$/,
-                            message: "Valid Mobile Number is required",
+                            message:
+                              "Enter a valid mobile number (10–15 digits)",
                           },
                         ]}
                       >
@@ -181,21 +196,19 @@ export default function Signup() {
                 </Col>
               </Row>
 
+              {}
               <Row gutter={[16, 16]}>
                 <Col xs={24} sm={24} md={12}>
                   <Form.Item
                     label="Password"
                     name="PasswordHash"
                     rules={[
-                      {
-                        required: true,
-                        message: "Please enter your password",
-                      },
+                      { required: true, message: "Please enter your password" },
                       {
                         pattern:
                           /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/,
                         message:
-                          "Password must be at least 8 characters and include uppercase, lowercase, and a special character",
+                          "At least 8 chars, include uppercase, lowercase & special char",
                       },
                     ]}
                   >
@@ -233,6 +246,7 @@ export default function Signup() {
                 </Col>
               </Row>
 
+              {}
               <Form.Item
                 name="consent"
                 valuePropName="checked"
@@ -247,12 +261,12 @@ export default function Signup() {
                   },
                 ]}
               >
-                <Checkbox onChange={() => form.validateFields(["consent"])}>
+                <Checkbox>
                   <span style={{ color: "red", marginRight: "4px" }}>*</span>I
                   consent to the{" "}
                   <span
                     className="data-link"
-                    title="By registering, you agree to the collection and processing of your personal information in accordance with our Privacy Policy. This includes your name, email address, pone number and any other details you provide during registration."
+                    title="By registering, you agree to the collection and processing of your personal information in accordance with our Privacy Policy."
                   >
                     use of my data
                   </span>{" "}
@@ -261,6 +275,7 @@ export default function Signup() {
                 </Checkbox>
               </Form.Item>
 
+              {}
               <Form.Item>
                 <Button
                   type="default"
@@ -272,14 +287,15 @@ export default function Signup() {
                   Sign up
                 </Button>
               </Form.Item>
+              <Form.Item>
+                <p className="auth-footer">
+                  Already have an account?{" "}
+                  <a href="/login" className="auth-link">
+                    Login
+                  </a>
+                </p>
+              </Form.Item>
             </Form>
-
-            <p className="auth-footer">
-              Already have an account?{" "}
-              <a href="/login" className="auth-link">
-                Login
-              </a>
-            </p>
           </div>
         </div>
       </div>

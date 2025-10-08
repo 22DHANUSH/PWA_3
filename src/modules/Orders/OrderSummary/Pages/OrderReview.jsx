@@ -24,7 +24,7 @@ import {
   createOrder,
   setOrderMeta,
 } from "../../order.slice";
-
+import confetti from "canvas-confetti";
 
 const { Title, Text } = Typography;
 
@@ -122,12 +122,10 @@ export default function OrderReview() {
 
     setSummary({
       subtotal,
-      tax: 0,
       discount: discountAmount,
       total,
     });
   }, [appliedDiscount, orderItems]);
-
 
   const handleConfirmOrder = async () => {
     if (!userId || !summary.total || !address) {
@@ -155,23 +153,6 @@ export default function OrderReview() {
         currency: "USD",
       });
 
-
-      // Step 2: Confirm the order items
-//       const result = await confirmOrder({ orderItems, createdOrder });
-//       const gaItems = orderItems.map((item) => ({
-//         item_id: item.productSkuId,
-//         item_name: item.name || "Unnamed Product",
-//         price: Number(item.price),
-//         quantity: item.quantity,
-//       }));
-
-//       trackPurchase({
-//         items: gaItems,
-//         value: totalAmount,
-//         transaction_id: createdOrder,
-//         currency: "USD",
-//       });
-
       dispatch(
         setOrderMeta({
           orderId: createdOrder,
@@ -189,52 +170,17 @@ export default function OrderReview() {
   };
 
   const formatCurrency = (amount) =>
-
     `$${(isNaN(amount) ? 0 : amount).toFixed(2)}`;
 
-//     new Intl.NumberFormat("en-IN", {
-//       style: "currency",
-//       currency: "USD",
-//     }).format(isNaN(amount) ? 0 : amount);
-
-//   const columns = [
-//     {
-//       title: "",
-//       dataIndex: "image",
-//       key: "image",
-//       render: (url) => (
-//         <Image width={60} src={url} alt="Product" style={{ borderRadius: 8 }} />
-//       ),
-//     },
-//     {
-//       title: "Product",
-//       dataIndex: "name",
-//       key: "name",
-//       render: (text, record) => (
-//         <Space direction="vertical" size={0}>
-//           <Text strong>{text}</Text>
-//           <Text type="secondary">
-//             Size: {record.size} • Color: {record.color}
-//           </Text>
-//         </Space>
-//       ),
-//     },
-//     { title: "Quantity", dataIndex: "quantity", key: "quantity" },
-//     {
-//       title: "Price",
-//       dataIndex: "price",
-//       key: "price",
-//       render: (price) => formatCurrency(parseFloat(price.replace("$", ""))),
-//     },
-//     {
-//       title: "Total",
-//       key: "totalItemPrice",
-//       render: (_, record) => (
-//         <Text strong>{formatCurrency(record.totalItemPrice)}</Text>
-//       ),
-//     },
-//   ];
-
+  const handleDiscountApply = ({ discountAmount, totalAfterDiscount }) => {
+    setAppliedDiscount({ discountAmount, totalAfterDiscount });
+    // Trigger confetti
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+    });
+  };
 
   if (loading)
     return <Spin size="large" style={{ display: "block", margin: 100 }} />;
@@ -267,11 +213,9 @@ export default function OrderReview() {
                 marginBottom: 16,
                 borderRadius: 12,
               }}
-              styles={{
-                body: {
-                  background: "#fafafa",
-                  padding: 12,
-                },
+              bodyStyle={{
+                background: "#fafafa",
+                padding: 12,
               }}
             >
               <Row gutter={16} align="middle">
@@ -318,26 +262,50 @@ export default function OrderReview() {
             <HomeOutlined /> Shipping
           </Title>
           <Divider />
+
+          {/* Primary Address Card */}
           {Object.keys(address).length === 0 ? (
             <Text type="warning">No address found</Text>
           ) : (
-            <Space direction="vertical">
-              {address.name && <Text>{address.name}</Text>}
-              {address.street && <Text>{address.street}</Text>}
-              {address.city && <Text>{address.city}</Text>}
-              {address.state && <Text>{address.state}</Text>}
-              {address.zip && <Text>{address.zip}</Text>}
-            </Space>
+            <Card
+              size="small"
+              style={{ marginBottom: 16, borderRadius: 12 }}
+              bodyStyle={{ background: "#fafafa", padding: 12 }}
+            >
+              <Title level={5}>Primary Address</Title>
+              <Space direction="vertical" style={{ width: "100%" }}>
+                {address.name && <Text>{address.name}</Text>}
+                {address.addressLine1 && <Text>{address.addressLine1}</Text>}
+                {address.addressLine2 && <Text>{address.addressLine2}</Text>}
+                {address.city && <Text>{address.city}</Text>}
+                {address.state && <Text>{address.state}</Text>}
+                {address.zip && <Text>{address.zip}</Text>}
+                {address.country && <Text>{address.country}</Text>}
+              </Space>
+            </Card>
           )}
+
+          <Button
+            type="primary"
+            block
+            size="large"
+            style={{
+              borderRadius: 8,
+              backgroundColor: "#000000",
+              borderColor: "#000000",
+              marginBottom: 16,
+            }}
+            onClick={() => navigate("/addresses")}
+          >
+            Change Delivery Address
+          </Button>
 
           <Divider />
 
           <PromoCode
             skuIds={skuIds}
             subtotal={summary.subtotal}
-            onApply={({ discountAmount, totalAfterDiscount }) => {
-              setAppliedDiscount({ discountAmount, totalAfterDiscount });
-            }}
+            onApply={handleDiscountApply}
           />
 
           <Divider />
@@ -352,10 +320,6 @@ export default function OrderReview() {
               <Text type="danger">
                 -{formatCurrency(summary.discount || 0)}
               </Text>
-            </Row>
-            <Row justify="space-between">
-              <Text>Tax:</Text>
-              <Text>{formatCurrency(summary.tax)}</Text>
             </Row>
             <Divider />
             <Row justify="space-between">

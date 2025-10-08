@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import logo from "/images/Columbia-Logo2.png";
+import logo from "../../../../assets/images/columbialogo.png";
 import "../../../../modules/Users/Auth/Auth.css";
  
 export default function AuthFooter() {
@@ -12,11 +12,10 @@ export default function AuthFooter() {
         <div className="auth-footer-left" onClick={() => navigate("/")}>
           <img src={logo} alt="Footer Logo" className="auth-footer-logo" />
         </div>
-        <div className="auth-footer-right" onClick={() => navigate("/")}>
+        <div className="auth-footer-right">
           <p className="auth-footer-text">© 2025 Columbia Sportswear Company</p>
         </div>
       </div>
     </footer>
   );
 }
- 

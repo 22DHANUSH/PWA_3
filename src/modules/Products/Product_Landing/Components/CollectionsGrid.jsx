@@ -18,7 +18,6 @@ export default function CollectionsGrid() {
     let mounted = true;
 
     const categoryMap = {
-
       Men: [1],
       Women: [39],
       Kid: [86],
@@ -51,8 +50,8 @@ export default function CollectionsGrid() {
           className="h-stack"
           style={{ justifyContent: "space-between", marginBottom: 16 }}
         >
-          <div className="heading-xl">COLUMBIA COLLECTIONS 2025</div>
-          <div className="h-stack" style={{ gap: 8 }}>
+          <div className="heading-xl">COLUMBIA COLLECTIONS</div>
+          {/* <div className="h-stack" style={{ gap: 8 }}>
             <Link className="subtle" style={{ marginRight: 16 }} to="/products">
               See All
             </Link>
@@ -67,6 +66,23 @@ export default function CollectionsGrid() {
               aria-label="Scroll right"
               onClick={() => scroll("right")}
               icon={<RightOutlined />}
+            />
+          </div> */}
+          <div className="controls-container">
+            <Link className="subtle" to="/products">
+              See All
+            </Link>
+            <Button
+              shape="circle"
+              aria-label="Scroll left"
+              icon={<LeftOutlined />}
+              onClick={() => scroll("left")}
+            />
+            <Button
+              shape="circle"
+              aria-label="Scroll right"
+              icon={<RightOutlined />}
+              onClick={() => scroll("right")}
             />
           </div>
         </div>
@@ -89,10 +105,14 @@ export default function CollectionsGrid() {
               <div
                 key={c?.imageUrl ?? idx}
                 className="v-stack"
-                style={{ gap: 10, flex: "0 0 284px", cursor: c ? "pointer" : "default" }}
+                style={{
+                  gap: 10,
+                  flex: "0 0 284px",
+                  cursor: c ? "pointer" : "default",
+                }}
                 onClick={() =>
-                  c && navigate(`/productdetails/${c.productId}/${c.productSkuID}`)
-
+                  c &&
+                  navigate(`/productdetails/${c.productId}/${c.productSkuID}`)
                 }
               >
                 <div
@@ -115,7 +135,6 @@ export default function CollectionsGrid() {
                       style={{ width: "100%", height: "100%" }}
                     />
                   )}
-
                 </div>
                 <div style={{ fontWeight: 600 }}>{c?.name ?? " "}</div>
                 <div className="subtle" style={{ fontWeight: 600 }}>

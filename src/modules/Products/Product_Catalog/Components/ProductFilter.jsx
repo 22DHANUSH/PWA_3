@@ -154,9 +154,6 @@ function ProductFilter() {
             "categoryName"
           )}
         </Panel>
-        <Panel header="Color" key="colors">
-          {renderCheckboxGroup("colors", colorOptions, "name", "name")}
-        </Panel>
         <Panel header="Brand" key="brandIds">
           {renderCheckboxGroup("brandIds", brands, "brandId", "brandName")}
         </Panel>

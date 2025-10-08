@@ -61,19 +61,15 @@ function SearchBar() {
   };
 
   return (
-    <div style={{ maxWidth: 400, marginBottom: 24 }}>
+    <div style={{ maxWidth: 400, marginBottom: 24, marginLeft: 15 }}>
       <AutoComplete
         options={options}
         style={{ width: "100%" }}
-        onSearch={(text) => setQuery(text)} // ✅ Only updates local query
+        onSearch={(text) => setQuery(text)}
         placeholder="Search for products"
         filterOption={false}
       >
-        <Input.Search
-          enterButton
-          onSearch={handleSearch} // ✅ Only triggers on Enter or button click
-          allowClear
-        />
+        <Input.Search enterButton onSearch={handleSearch} allowClear />
       </AutoComplete>
     </div>
   );

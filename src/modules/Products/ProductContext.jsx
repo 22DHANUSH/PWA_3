@@ -10,16 +10,22 @@ export function ProductProvider({ children }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const userId = useSelector((state) => state.auth.userId);
-  const [filters, setFilters] = useState({
-    brandIds: [],
-    categoryIds: [],
-    colors: [],
-    sizes: [],
-    genders: [],
-    minPrice: 0,
-    maxPrice: 500,
-    searchTerm: "",
-    userId: userId,
+
+  const [filters, setFilters] = useState(() => {
+    const saved = sessionStorage.getItem("productFilters");
+    return saved
+      ? JSON.parse(saved)
+      : {
+          brandIds: [],
+          categoryIds: [],
+          colors: [],
+          sizes: [],
+          genders: [],
+          minPrice: 0,
+          maxPrice: 500,
+          searchTerm: "",
+          userId: userId,
+        };
   });
 
   const [pagination, setPagination] = useState({
@@ -28,17 +34,18 @@ export function ProductProvider({ children }) {
     totalCount: 0,
   });
 
-  // Fetch SAS token and append to image URL
+  useEffect(() => {
+    sessionStorage.setItem("productFilters", JSON.stringify(filters));
+  }, [filters]);
+
   const getPrimaryImageWithSas = async (skuId) => {
     try {
       const response = await user_api.get(`/blob/GenerateSasToken/${skuId}/1`);
       const images = Array.isArray(response.data) ? response.data : [];
       const primaryImage = images.find((img) => img.isPrimary === true);
-
       if (primaryImage?.imagePath && primaryImage?.sasToken) {
         return `${primaryImage.imagePath}?${primaryImage.sasToken}`;
       }
-
       return primaryImage?.imageUrl ?? "";
     } catch (err) {
       console.error(`Error fetching SAS image for SKU ${skuId}`, err.message);
@@ -54,24 +61,19 @@ export function ProductProvider({ children }) {
     setLoading(true);
     try {
       const payload = mapToRequestPayload(model);
-      if (userId) {
-        payload.userId = userId;
-      }
+      if (userId) payload.userId = userId;
+
       const res = await product_api.post(
         `/products/search?pageNumber=${pageNumber}&pageSize=${pageSize}`,
         payload
       );
 
-      const rawProducts = res.data ?? [];
+      const rawProducts = res.data?.products ?? res.data ?? [];
 
-      // Enrich each product with SAS image URL
       const enrichedProducts = await Promise.all(
         rawProducts.map(async (product) => {
           const imageUrl = await getPrimaryImageWithSas(product.productSkuID);
-          return {
-            ...product,
-            imageUrl,
-          };
+          return { ...product, imageUrl };
         })
       );
 
@@ -80,7 +82,7 @@ export function ProductProvider({ children }) {
         ...prev,
         pageNumber,
         pageSize,
-        totalCount: enrichedProducts.length,
+        total: res.data.totalCount || 180,
       }));
     } catch (err) {
       console.error("Error fetching products:", err);

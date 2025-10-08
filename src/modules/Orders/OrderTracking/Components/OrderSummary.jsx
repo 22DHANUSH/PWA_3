@@ -1,15 +1,14 @@
-// component -> OrderSummary.jsx :
 import React, { useEffect, useState } from "react";
 import { List, Divider, Typography, Spin } from "antd";
-import "../../order.css"
+import "../../order.css";
 import { getPrimaryImageBySku } from "../../order.api";
- 
-const { Text, Title } = Typography;
- 
+
+const { Text } = Typography;
+
 const OrderSummary = ({ products, totalAmount, shipping }) => {
   const [imageMap, setImageMap] = useState({});
   const [loadingImages, setLoadingImages] = useState(true);
- 
+
   useEffect(() => {
     const fetchImages = async () => {
       const map = {};
@@ -30,22 +29,29 @@ const OrderSummary = ({ products, totalAmount, shipping }) => {
       );
       setImageMap(map);
       setLoadingImages(false);
-      console.log("Image Map:", imageMap);
     };
- 
+
     if (products?.length) {
       fetchImages();
     }
   }, [products]);
+
   console.log("OrderSummary products:", products);
- 
+
+  // ✅ Remove duplicates by productSkuId
+  const uniqueProducts = products.filter(
+    (item, index, self) =>
+      index === self.findIndex((p) => p.productSkuId === item.productSkuId)
+  );
+
   return (
     <div className="order-summary">
       <List
         className="order-summary-list"
         itemLayout="horizontal"
-        dataSource={products}
-        renderItem={(products) => (
+        dataSource={uniqueProducts}
+        rowKey={(item) => item.productSkuId} // ensure unique keys
+        renderItem={(product) => (
           <List.Item className="order-summary-item">
             <List.Item.Meta
               avatar={
@@ -53,36 +59,42 @@ const OrderSummary = ({ products, totalAmount, shipping }) => {
                   <Spin size="small" />
                 ) : (
                   <img
-                    src={imageMap[products.productSkuId]}
-                    alt={products.productName}
+                    src={imageMap[product.productSkuId]}
+                    alt={product.productName}
                     style={{ width: 64, height: 64, objectFit: "cover" }}
                   />
                 )
               }
-              title={products.productName}
+              title={<Text strong>{product.productName}</Text>}
               description={
-  <>
-    <Text>Qty: {products.quantity}</Text>
-    <br />
-    {/* <Text>Total: ${products.totalItemPrice.toFixed(2)}</Text> */}
-  </>
-}
- 
+                <>
+                  <Text>Quantity: {product.quantity}</Text>
+                </>
+              }
             />
           </List.Item>
         )}
       />
- 
+
       <Divider style={{ margin: "8px 0" }} />
+
       <div className="order-summary-total">
-  <Text strong>Total</Text>
-  <Text strong>${totalAmount.toFixed(2)}</Text>
-</div>
- 
+        <Text strong>Total</Text>
+        <Text strong>${totalAmount.toFixed(2)}</Text>
+      </div>
+
       <Divider style={{ margin: "8px 0" }} />
+
       <div className="order-summary-address">
-        <Text strong className="shipping-title">Shipping Address</Text>
-        {shipping.name && <Text>{shipping.name}</Text>}
+        <Text strong className="shipping-title">
+          Shipping Address
+        </Text>
+        {shipping.name && (
+          <>
+            <br />
+            <Text>{shipping.name}</Text>
+          </>
+        )}
         <br />
         <Text>{shipping.addressLine1}</Text>
         {shipping.addressLine2 && (
@@ -101,5 +113,5 @@ const OrderSummary = ({ products, totalAmount, shipping }) => {
     </div>
   );
 };
-  
+
 export default OrderSummary;

@@ -561,3 +561,39 @@ a:hover {
 .ant-checkbox-inner {
   border-radius: 2px !important;
 }
+.collection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+ 
+.controls-container {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+ 
+@media (max-width: 768px) {
+  .collection-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+ 
+  .controls-container {
+    margin-top: 12px;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+ 
+  .controls-container .ant-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+ 
+  .controls-container .subtle {
+    font-size: 14px;
+  }
+}

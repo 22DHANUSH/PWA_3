@@ -10,45 +10,51 @@ import WishlistButton from "../../../Users/WishlistItems/Components/WishlistButt
 import { addToCartFlow } from "../../../Cart/cart.api";
 import { useCart } from "../../../Cart/CartContext";
 import useGA4Tracking from "../../../../../useGA4Tracking.js";
-
+ 
 const { Text } = Typography;
-
+ 
 const ProductActions = ({ stock, price, userId, productSkuId, product }) => {
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
   const { refreshCartCount } = useCart();
   const { trackAddToCart } = useGA4Tracking();
-
+ 
   useEffect(() => {
     setQuantity(1);
   }, [stock]);
-
+ 
   const handleIncrease = () => {
     if (quantity < stock) {
       setQuantity((prev) => prev + 1);
     }
   };
-
+ 
   const handleDecrease = () => {
     if (quantity > 1) {
       setQuantity((prev) => prev - 1);
     }
   };
-
+ 
   const getGuestCart = () =>
     JSON.parse(localStorage.getItem("guestCart") || "[]");
   const setGuestCart = (items) =>
     localStorage.setItem("guestCart", JSON.stringify(items));
   const handleAddToCart = async () => {
+   
+  if (stock <= 0) {
+    message.error("This product is currently out of stock.");
+    return;
+  }
+ 
     try {
       setLoading(true);
-
+ 
       if (!userId) {
         let guestCart = getGuestCart();
         const existing = guestCart.find(
           (item) => item.productSkuId === productSkuId
         );
-
+ 
         if (existing) {
           existing.quantity += quantity;
         } else {
@@ -63,13 +69,13 @@ const ProductActions = ({ stock, price, userId, productSkuId, product }) => {
             productColor: product.productColor || "",
           });
         }
-
+ 
         setGuestCart(guestCart);
-        message.success("Added to cart (guest)!");
+        message.success("Added to cart!");
         await refreshCartCount();
         return;
       }
-
+ 
       await addToCartFlow(userId, productSkuId, quantity, {
         productId: product.productId,
         productTitle: product.productTitle,
@@ -86,7 +92,7 @@ const ProductActions = ({ stock, price, userId, productSkuId, product }) => {
       setLoading(false);
     }
   };
-
+ 
   return (
     <div
       style={{
@@ -132,7 +138,7 @@ const ProductActions = ({ stock, price, userId, productSkuId, product }) => {
           </div>
         </div>
       </div>
-
+ 
       <div
         style={{
           display: "flex",
@@ -151,7 +157,7 @@ const ProductActions = ({ stock, price, userId, productSkuId, product }) => {
           onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#000")}
           onClick={() => {
             handleAddToCart();
-
+ 
             trackAddToCart({
               productTitle: product.productTitle || product.productName,
               productPrice: product.productPrice || 0,
@@ -161,7 +167,7 @@ const ProductActions = ({ stock, price, userId, productSkuId, product }) => {
         >
           Add to Cart
         </Button>
-
+ 
         <div style={{ flex: 1, minWidth: "120px", maxWidth: "180px" }}>
           <WishlistButton userId={userId} productSkuId={productSkuId} />
         </div>
@@ -169,5 +175,7 @@ const ProductActions = ({ stock, price, userId, productSkuId, product }) => {
     </div>
   );
 };
-
+ 
 export default ProductActions;
+ 
+ 

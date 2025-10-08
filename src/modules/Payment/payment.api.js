@@ -1,8 +1,17 @@
 import { payment_api, payment_api_api } from "../../app/payment.axios";
 
 // Razorpay APIs
-export const createRazorpayOrder = (amount) =>
-  payment_api.post("CreateOrderUSD", { Amount: amount });
+export const createRazorpayOrder = async (amount) => {
+  try {
+    const response = await payment_api.post("CreateOrderUSD", {
+      Amount: amount,
+    });
+    return response;
+  } catch (error) {
+    console.error("Error creating Razorpay order:", error);
+    throw error;
+  }
+};
 
 export const verifyRazorpayPayment = (paymentDetails) =>
   payment_api.post("VerifyPayment", paymentDetails);

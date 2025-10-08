@@ -177,18 +177,22 @@ const ProductDetailPage = ({ productId, productSkuId }) => {
             {product && (
               <>
                 <ProductInfo product={product} />
-                <ProductOptions
-                  productId={productId}
-                  productSkuId={productSkuId}
-                  selectedColor={selectedColor}
-                  setSelectedColor={setSelectedColor}
-                  selectedSize={selectedSize}
-                  setSelectedSize={setSelectedSize}
-                  stock={selectedSku.stocks}
-                  quantity={quantity}
-                  setQuantity={setQuantity}
-                  setSelectedSku={setSelectedSku}
-                />
+
+                {selectedSku && (
+                  <ProductOptions
+                    productId={productId}
+                    selectedColor={selectedColor}
+                    setSelectedColor={setSelectedColor}
+                    selectedSize={selectedSize}
+                    setSelectedSize={setSelectedSize}
+                    stock={selectedSku?.stocks ?? 0}
+                    quantity={quantity}
+                    setQuantity={setQuantity}
+                    setSelectedSku={setSelectedSku}
+                    skus={skus}
+                  />
+                )}
+
                 <ProductActions
                   stock={selectedSku.stocks}
                   price={selectedSku.productPrice}

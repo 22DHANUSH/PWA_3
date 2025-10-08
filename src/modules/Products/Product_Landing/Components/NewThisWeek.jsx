@@ -36,12 +36,29 @@ export default function MensCollection() {
           style={{ justifyContent: "space-between", marginBottom: 16 }}
         >
           <div className="heading-xl">
-            MEN&apos;S COLLECTION 2025{" "}
+            MEN&apos;S COLLECTION{" "}
             <span className="subtle" style={{ fontSize: 16 }}>
               ({items?.length ?? 0})
             </span>
           </div>
-          <div className="h-stack" style={{ gap: 8 }}>
+          <div className="controls-container">
+            <Link className="subtle" to="/products?category=mens">
+              See All
+            </Link>
+            <Button
+              shape="circle"
+              aria-label="Scroll left"
+              icon={<LeftOutlined />}
+              onClick={() => scroll("left")}
+            />
+            <Button
+              shape="circle"
+              aria-label="Scroll right"
+              icon={<RightOutlined />}
+              onClick={() => scroll("right")}
+            />
+          </div>
+          {/* <div className="h-stack" style={{ gap: 8 }}>
             <Link
               className="subtle"
               style={{ marginRight: 16 }}
@@ -61,7 +78,7 @@ export default function MensCollection() {
               onClick={() => scroll("right")}
               icon={<RightOutlined />}
             />
-          </div>
+          </div> */}
         </div>
 
         <div className="scroller-wrap">
@@ -79,7 +96,9 @@ export default function MensCollection() {
                   style={{ gap: 10, cursor: item ? "pointer" : "default" }}
                   onClick={() =>
                     item &&
-                    navigate(`/productdetails/${item.productId}/${item.productSkuID}`)
+                    navigate(
+                      `/productdetails/${item.productId}/${item.productSkuID}`
+                    )
                   }
                 >
                   <div
@@ -120,4 +139,3 @@ export default function MensCollection() {
     </section>
   );
 }
-

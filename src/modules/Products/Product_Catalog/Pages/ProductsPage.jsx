@@ -28,9 +28,13 @@ import {
 import { useCart } from "../../../Cart/CartContext";
 import { Modal } from "antd";
 
-import { MinusOutlined, PlusOutlined } from "@ant-design/icons";
 import ProductOptions from "../../Product_Description/Components/ProductOptions";
 import useGA4Tracking from "../../../../../useGA4Tracking.js";
+import {
+  getCachedSkus,
+  setCachedSkus,
+} from "../../Product_Catalog/Components/ProductSkuCache.jsx";
+import { getSkusByProductId, getImagesBySku } from "../../products.api.js";
 
 const { Title } = Typography;
 
@@ -97,6 +101,36 @@ function ProductsPage() {
   const [selectedSku, setSelectedSku] = useState(null);
   const { trackAddToCart, trackAddToWishlist } = useGA4Tracking();
   const [localProducts, setLocalProducts] = useState([]);
+  const [skus, setSkus] = useState([]);
+
+  useEffect(() => {
+    const fetchSkus = async () => {
+      setLoadingOptions(true);
+
+      const cached = getCachedSkus(selectedProduct?.productId);
+      if (cached) {
+        setSkus([...cached]);
+        setLoadingOptions(false); // ✅ Hide spinner
+        return;
+      }
+
+      try {
+        const data = await getSkusByProductId(selectedProduct?.productId);
+        console.log("Fetched SKUs:", data);
+        setCachedSkus(selectedProduct?.productId, data);
+        setSkus([...data]);
+      } catch (err) {
+        console.error("Error fetching SKUs:", err);
+      } finally {
+        setLoadingOptions(false); // ✅ Hide spinner after fetch
+      }
+    };
+
+    if (selectedProduct?.productId) {
+      fetchSkus();
+    }
+  }, [selectedProduct]);
+
   useEffect(() => {
     setLocalProducts(products);
   }, [products]);
@@ -180,15 +214,26 @@ function ProductsPage() {
     }
   };
 
-  const handleAddToCart = async (e, productSkuId, quantity = 1) => {
+  const handleAddToCart = async (
+    e,
+    productSkuId,
+    quantity = 1,
+    product = null
+  ) => {
     e.stopPropagation();
+
     if (!productSkuId) {
       message.error("Product SKU is missing");
       return;
     }
 
     if (!userId) {
-      addToGuestCart({ productSkuId }, quantity);
+      if (!product) {
+        message.error("Product details missing for guest cart");
+        return;
+      }
+
+      addToGuestCart(product, quantity);
       message.success("Added to cart");
       await refreshCartCount();
       return;
@@ -236,6 +281,10 @@ function ProductsPage() {
 
   const handlePageChange = (page) => {
     setPagination((prev) => ({ ...prev, pageNumber: page }));
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   return (
@@ -385,14 +434,13 @@ function ProductsPage() {
                               width={600}
                               bodyStyle={{
                                 minHeight: 400,
-                                maxHeight: 400,
+                                maxHeight: 500,
                                 overflowY: "auto",
-                                padding: "24px",
+                                padding: "16px",
                               }}
                               onCancel={() => {
                                 setIsModalVisible(false);
                                 setSelectedProduct(null);
-                                setSelectedSku(null);
                                 setSelectedColor(null);
                                 setSelectedSize(null);
                                 setQuantity(1);
@@ -408,14 +456,37 @@ function ProductsPage() {
                                   key="addtocart"
                                   type="primary"
                                   onClick={(e) => {
+                                    const matchedSku = skus.find(
+                                      (sku) =>
+                                        sku.productColor === selectedColor &&
+                                        sku.productSize === selectedSize
+                                    );
+
+                                    if (!matchedSku?.productSkuId) {
+                                      message.error(
+                                        "Please select valid color and size"
+                                      );
+                                      return;
+                                    }
+
                                     handleAddToCart(
                                       e,
-                                      selectedSku?.productSkuId,
-                                      quantity
+                                      matchedSku.productSkuId,
+                                      quantity,
+                                      {
+                                        ...selectedProduct,
+                                        ...matchedSku,
+                                        productSize: selectedSize,
+                                        productColor: selectedColor,
+                                      }
                                     );
                                     setIsModalVisible(false);
                                   }}
-                                  disabled={!selectedSku || loadingOptions}
+                                  disabled={
+                                    !selectedColor ||
+                                    !selectedSize ||
+                                    loadingOptions
+                                  }
                                 >
                                   Add to Cart
                                 </Button>,
@@ -445,21 +516,63 @@ function ProductsPage() {
                                 )}
 
                                 {selectedProduct && (
-                                  <ProductOptions
-                                    productId={selectedProduct.productId}
-                                    productSkuId={selectedProduct.productSkuID}
-                                    selectedColor={selectedColor}
-                                    setSelectedColor={setSelectedColor}
-                                    selectedSize={selectedSize}
-                                    setSelectedSize={setSelectedSize}
-                                    stock={selectedProduct.stock}
-                                    quantity={quantity}
-                                    setQuantity={setQuantity}
-                                    setSelectedSku={setSelectedSku}
-                                    onOptionsLoaded={() =>
-                                      setLoadingOptions(false)
-                                    }
-                                  />
+                                  <>
+                                    <ProductOptions
+                                      productSkuId={
+                                        selectedProduct.productSkuId
+                                      }
+                                      selectedColor={selectedColor}
+                                      setSelectedColor={setSelectedColor}
+                                      selectedSize={selectedSize}
+                                      setSelectedSize={setSelectedSize}
+                                      quantity={quantity}
+                                      setQuantity={setQuantity}
+                                      onOptionsLoaded={() =>
+                                        setLoadingOptions(false)
+                                      }
+                                      skus={skus}
+                                    />
+
+                                    <div
+                                      style={{
+                                        marginTop: 20,
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        gap: 12,
+                                      }}
+                                    >
+                                      <Button
+                                        onClick={() =>
+                                          setQuantity((q) => Math.max(1, q - 1))
+                                        }
+                                        disabled={quantity <= 1}
+                                      >
+                                        -
+                                      </Button>
+                                      <span
+                                        style={{
+                                          fontSize: 18,
+                                          fontWeight: "bold",
+                                          minWidth: 30,
+                                          textAlign: "center",
+                                        }}
+                                      >
+                                        {quantity}
+                                      </span>
+                                      <Button
+                                        onClick={() =>
+                                          setQuantity((q) => q + 1)
+                                        }
+                                        disabled={
+                                          selectedProduct?.stock &&
+                                          quantity >= selectedProduct.stock
+                                        }
+                                      >
+                                        +
+                                      </Button>
+                                    </div>
+                                  </>
                                 )}
                               </div>
                             </Modal>
@@ -473,7 +586,13 @@ function ProductsPage() {
             })}
           </Row>
 
-          <div style={{ marginTop: "30px", textAlign: "center" }}>
+          <div
+            style={{
+              marginTop: "30px",
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
             <Pagination
               current={pagination.pageNumber}
               pageSize={pagination.pageSize}

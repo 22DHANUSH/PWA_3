@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { forgotPassword } from "./../../users.api";
 import "./../../Auth/Auth.css";
 import "../../../../assets/styles/global.css";
-import logo from "/images/columbialogo.png";
+import logo from "../../../../assets/images/columbialogo.png";
 import AuthFooter from "../../../Products/Product_Landing/Components/AuthFooter";
 import AuthHeader from "../../../Products/Product_Landing/Components/AuthHeader";
  
@@ -13,31 +13,47 @@ const { Title, Text } = Typography;
 export default function ForgotPassword() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+ const [form] = Form.useForm();
  
-  const onFinish = async (values) => {
-    setLoading(true);
-    try {
-      const res = await forgotPassword({
-        email: values.email,
-        password: values.password, // ✅ lowercase key as expected by backend
-      });
+const onFinish = async (values) => {
+  setLoading(true);
+  try {
+    const res = await forgotPassword({
+      email: values.email,
+      password: values.password,
+    });
  
-      if (typeof res === "string") {
-        message.success(res);
-      } else {
-        message.success(res.message || "Password updated successfully");
-      }
+    if (res.errors) {
+      const formattedErrors = Object.entries(res.errors).map(([field, errorMsg]) => ({
+        name: field,
+        errors: [errorMsg],
+      }));
  
-      navigate("/login");
-    } catch (err) {
-      console.error("Forgot password error:", err);
-      message.error(
-        err?.response?.data?.message || err?.message || "Error resetting password. Please try again."
-      );
-    } finally {
-      setLoading(false);
+      form.setFields(formattedErrors);
+      form.scrollToField(formattedErrors[0].name);
+ 
+      message.error(res.message || "Password reset failed.");
+      return;
     }
-  };
+ 
+    message.success(res.message || "Password updated successfully");
+    navigate("/login");
+  } catch (err) {
+  console.error("Forgot password error:", err);
+ 
+  const backendErrors = err?.response?.data?.errors;
+  const errorMessage =
+    backendErrors?.password ||
+    backendErrors?.email ||
+    err?.response?.data?.message ||
+    err?.message ||
+    "Error resetting password. Please try again.";
+ 
+  message.error(errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
  
   return (
     <>

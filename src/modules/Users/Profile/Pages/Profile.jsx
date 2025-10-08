@@ -328,7 +328,7 @@ export default function Profile() {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="Gender" required>
+              <Form.Item label="Gender">
                 <Select
                   value={profile.gender}
                   onChange={(value) => handleProfileChange("gender", value)}

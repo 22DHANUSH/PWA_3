@@ -54,13 +54,6 @@ function SearchAndFilterDemo() {
       >
         <div className="mobile-filter-header">
           <span className="title">Filters</span>
-          <Button
-            type="link"
-            size="small"
-            onClick={() => window.location.reload()}
-          >
-            Reset All
-          </Button>
         </div>
 
         <div className="mobile-filter-body">

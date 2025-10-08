@@ -10,7 +10,8 @@ import {
 } from "../Payment/payment.api";
 import { clearCartByUser } from "../Cart/cart.api.js";
 import { updateOrder } from "../Orders/order.api.js";
- 
+import { useCart } from "../Cart/CartContext";
+
 export default function BraintreePayment({
   amount,
   firstName,
@@ -24,16 +25,17 @@ export default function BraintreePayment({
   const dropinContainerRef = useRef(null);
   const instanceRef = useRef(null);
   const navigate = useNavigate();
- 
+  const { refreshCartCount } = useCart();
+
   useEffect(() => {
     getBraintreeClientToken()
       .then((res) => setClientToken(res.data.clientToken))
       .catch(() => message.error("Failed to fetch Braintree token"));
   }, []);
- 
+
   useEffect(() => {
     if (!isModalVisible || !clientToken || !dropinContainerRef.current) return;
- 
+
     dropin.create(
       {
         authorization: clientToken,
@@ -49,26 +51,26 @@ export default function BraintreePayment({
         instanceRef.current = instance;
       }
     );
- 
+
     return () => {
       instanceRef.current?.teardown().catch(() => {});
       instanceRef.current = null;
     };
   }, [clientToken, isModalVisible]);
- 
+
   const handleBraintreeSubmit = () => {
     if (!instanceRef.current) {
       message.error("Braintree UI not ready");
       return;
     }
- 
+
     instanceRef.current.requestPaymentMethod(async (err, payload) => {
       if (err) {
         console.error("Payment method error:", err);
         message.error("Failed to get payment method");
         return;
       }
- 
+
       const paymentData = {
         paymentMethodNonce: payload.nonce,
         amount: amount,
@@ -81,18 +83,18 @@ export default function BraintreePayment({
           countryCodeAlpha2: "IN",
         },
       };
- 
+
       try {
         const result = await processBraintreePayment(paymentData);
- 
+
         if (result.data.success) {
           message.success("Payment succeeded!");
         } else {
           message.error(`Payment failed: ${result.data.message || "Unknown"}`);
         }
- 
+
         setIsModalVisible(false);
- 
+
         // Create payment record
         try {
           const payData = {
@@ -105,7 +107,7 @@ export default function BraintreePayment({
             transactionId: result.data.transactionId,
             paymentGateway: "BrainTree",
           };
- 
+
           const paymentRes = await createPayment(payData);
           console.log("Payment logged:", paymentRes);
         } catch (paymentErr) {
@@ -113,7 +115,7 @@ export default function BraintreePayment({
           message.error("Could not save payment record. Contact support.");
           return; // stop execution
         }
- 
+
         // Update order
         try {
           const orderUpdateData = {
@@ -136,15 +138,16 @@ export default function BraintreePayment({
               : "Payment failed, and order status could not be updated."
           );
         }
- 
+
         // Clear cart
         try {
           await clearCartByUser(userId);
+          await refreshCartCount();
         } catch (cartErr) {
           console.error("Failed to clear cart:", cartErr);
           message.warning("Cart was not cleared automatically.");
         }
- 
+
         // Navigate after everything
         navigate(`/order-tracking/${orderId}`);
       } catch (err) {
@@ -153,7 +156,7 @@ export default function BraintreePayment({
       }
     });
   };
- 
+
   return (
     <Modal
       title="Braintree Payment"
@@ -178,4 +181,3 @@ export default function BraintreePayment({
     </Modal>
   );
 }
- 

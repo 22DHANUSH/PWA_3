@@ -6,6 +6,7 @@
   --shadow-color: rgba(0, 0, 0, 0.06);
   --input-height: 40px;
   --border-radius: 0.75rem;
+  --logo-height: 50px;
 }
  
 /* Base Reset */
@@ -39,7 +40,7 @@ html, body {
   content: "";
   position: absolute;
   inset: 0;
-  background-image: url("/images/csc_logo.webp");
+  background-image: url("../../../assets/images/csc_logo.webp");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -217,7 +218,7 @@ html, body {
 }
  
 .auth-header-logo {
-  height: 50px;
+  height: var(--logo-height);
   object-fit: contain;
 }
  
@@ -247,22 +248,14 @@ html, body {
   margin: 0 auto;
 }
  
-.auth-footer-left {
-  cursor: pointer;
-}
- 
 .auth-footer-logo {
-  height: 40px;
+  height: var(--logo-height);
   object-fit: contain;
   transition: transform 0.2s ease;
 }
  
 .auth-footer-logo:hover {
   transform: scale(1.05);
-}
- 
-.auth-footer-right {
-  cursor: pointer;
 }
  
 .auth-footer-text {
@@ -273,16 +266,22 @@ html, body {
  
 /* Responsive Enhancements */
 @media (max-width: 768px) {
+ 
   .auth-page {
     flex-direction: column;
     height: auto;
   }
  
-  .auth-left,
-  .auth-right {
-    width: 100%;
-    min-height: 50vh;
-  }
+ .auth-left {
+  display: none;
+}
+ 
+.auth-right {
+  width: 100%;
+  min-height: 100vh;
+  padding: 2rem;
+}
+ 
  
   .auth-right {
     padding: 1.5rem;
@@ -306,3 +305,6 @@ html, body {
     margin-top: 0.5rem;
   }
 }
+ 
+
+ 
