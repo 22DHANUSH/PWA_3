@@ -8,10 +8,10 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       workbox: {
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024, // 5 MB
       },
       manifest: {
-        name: "My E-Commerce App",
+        name: "CH-Ecom",
         short_name: "EcomApp",
         start_url: "/",
         display: "standalone",
@@ -29,7 +29,7 @@ export default defineConfig({
             type: "image/png",
           },
           {
-            src: "csc_logo.webp",
+            src: "MyLogo.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "any maskable",
@@ -39,13 +39,3 @@ export default defineConfig({
     }),
   ],
 });
-
-// import { defineConfig } from 'vite'
-// import react from '@vitejs/plugin-react'
-
-// export default defineConfig({
-//   plugins: [react()],
-//   optimizeDeps: {
-//     include: ['redux-persist'],
-//   },
-// })
